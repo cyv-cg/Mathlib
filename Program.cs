@@ -18,6 +18,9 @@ namespace Mathlib
 
 		static void MakeGraph()
 		{
+			// This is just an example graph from online; properties are my own.
+			// src: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/
+
 			Vertex A = new Vertex(0);
 			A.SetProp("xPos", 0);
 			A.SetProp("yPos", 0);
@@ -51,7 +54,7 @@ namespace Mathlib
 			DE.SetProp("weight", 2);
 			Edge[] edges = new Edge[] { AB, AE, BC, BD, BE, CD, DE };
 
-			Graph G = new Graph(vertices, edges, false, "Graph 1");
+			Graph G = new Graph(vertices, edges, false, "Sample Graph");
 			Console.WriteLine(G);
 
 			Console.WriteLine();
