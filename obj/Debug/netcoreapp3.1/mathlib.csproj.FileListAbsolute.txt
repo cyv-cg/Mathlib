@@ -1,0 +1,13 @@
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.exe
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.deps.json
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.runtimeconfig.json
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.runtimeconfig.dev.json
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.dll
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\bin\Debug\netcoreapp3.1\mathlib.pdb
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.csproj.AssemblyReference.cache
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.AssemblyInfoInputs.cache
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.AssemblyInfo.cs
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.csproj.CoreCompileInputs.cache
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.dll
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.pdb
+C:\Users\Christopher\Documents\GitHub\mathlib\mathlib\obj\Debug\netcoreapp3.1\mathlib.genruntimeconfig.cache
