@@ -7,6 +7,19 @@ namespace Mathlib.System
 	public static class Commands
 	{
 		public static string Path { get { return AppDomain.CurrentDomain.BaseDirectory; } }
+		public static string RootFolder { get
+			{
+				string[] directories = Path.Split('\\');
+				string root = "";
+				foreach (string s in directories)
+				{
+					if (s.Contains("bin"))
+						break;	
+					root += s + "/";
+				}
+				return root;
+			} 
+		}
 
 		/// <summary> 
 		/// Run one or more commands in the command prompt.

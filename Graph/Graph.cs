@@ -1,13 +1,14 @@
-﻿using System;
+﻿using System.Text.Json;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Mathlib.Graphs
 {
 	public class Graph
 	{
-		public readonly string name;
+		public string Name { get; private set; }
 
-		public readonly bool directed;
+		public bool Directed { get; private set; }
 
 		public List<Vertex> Vertices { get; private set; }
 		public List<Edge> Edges { get; private set; }
@@ -16,8 +17,8 @@ namespace Mathlib.Graphs
 		
 		public Graph(Vertex[] vertices, Edge[] edges, bool directed = false, string name = "New Graph")
 		{
-			this.name = name;
-			this.directed = directed;
+			this.Name = name;
+			this.Directed = directed;
 
 			Vertices = new List<Vertex>();
 			Edges = new List<Edge>();
@@ -36,9 +37,9 @@ namespace Mathlib.Graphs
 		}
 		public void AddEdge(Edge e)
 		{
-			AdjList[e.initial].Add(e.terminal);
-			if (!directed)
-				AdjList[e.terminal].Add(e.initial);
+			AdjList[e.Initial].Add(e.Terminal);
+			if (!Directed)
+				AdjList[e.Terminal].Add(e.Initial);
 			Edges.Add(e);
 		}
 
@@ -55,7 +56,7 @@ namespace Mathlib.Graphs
 		{
 			foreach (Edge e in Edges)
 			{
-				if ((e.initial == initial && e.terminal == terminal) || (e.initial == terminal && e.terminal == initial && !directed))
+				if ((e.Initial == initial && e.Terminal == terminal) || (e.Initial == terminal && e.Terminal == initial && !Directed))
 					return e;
 			}
 			return null;
@@ -88,7 +89,7 @@ namespace Mathlib.Graphs
 			{
 				// Find which remaining vertex has the shortest distance from the source.
 				// These will probably be vertices indicent to one already visited.
-				Vertex u = GraphExt.VertWithMinProp<int>(Q.ToArray(), "distance");
+				Vertex u = PropertyHolder.ItemWithMinProp<int, Vertex>(Q.ToArray(), "distance");
 				// Remove that vertex from consideration.
 				Q.Remove(u);
 
@@ -157,7 +158,7 @@ namespace Mathlib.Graphs
 		public override string ToString()
 		{
 			// Initialize the string as just the name of the graph.
-			string graph = name + "\n";
+			string graph = Name + "\n";
 			// Loop through each vertex in the graph.
 			for (int r = 0; r < AdjList.Count; r++)
 			{
@@ -183,6 +184,53 @@ namespace Mathlib.Graphs
 					graph += "\n";
 			}
 			return graph;
+		}
+
+		public string JSON(bool writeIndented = true)
+		{
+			JsonSerializerOptions options = new JsonSerializerOptions
+			{
+				WriteIndented = writeIndented
+			};
+			return JsonSerializer.Serialize(new GraphSerializationData(this), options);
+		}
+
+		public void Save(string path)
+		{
+			string fileName = path + "/" + Name.Replace(" ", "_") + ".graph";
+
+			if (!File.Exists(fileName))
+				File.Create(fileName);
+			File.WriteAllText(fileName, JSON());
+		}
+
+		private struct GraphSerializationData
+		{
+			public string Name { get; private set; }
+
+			public bool Directed { get; private set; }
+
+			public List<Vertex.VertexSerializationData> Vertices { get; private set; }
+			public List<Edge.EdgeSerializationData> Edges { get; private set; }
+
+			public GraphSerializationData(Graph G)
+			{
+				Name = G.Name;
+				Directed = G.Directed;
+
+				Vertices = new List<Vertex.VertexSerializationData>();
+				Edges = new List<Edge.EdgeSerializationData>();
+
+				foreach (Vertex v in G.Vertices)
+					Vertices.Add(new Vertex.VertexSerializationData(v, "xPos", "yPos"));
+				foreach (Edge e in G.Edges)
+					Edges.Add(new Edge.EdgeSerializationData(e, "weight"));
+			}
+
+			public override string ToString()
+			{
+				return JsonSerializer.Serialize(this);
+			}
 		}
 	}
 }

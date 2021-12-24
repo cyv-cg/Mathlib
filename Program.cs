@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using System.Collections.Generic;
 
 using Mathlib.System;
@@ -10,8 +11,8 @@ namespace Mathlib
 	{
 		public static void Main()
 		{
-			Commands.CmdOut($"cd {Commands.Path}", "cd ..", "cd ..", "cd ..", "DrawGraph.py");
-			Console.WriteLine();
+			//Commands.CmdOut($"cd {Commands.Path}", "cd ..", "cd ..", "cd ..", "DrawGraph.py");
+			//Console.WriteLine();
 
 			MakeGraph();
 		}
@@ -25,17 +26,17 @@ namespace Mathlib
 			A.SetProp("xPos", 0);
 			A.SetProp("yPos", 0);
 			Vertex B = new Vertex(1);
-			B.SetProp("xPos", 2);
+			B.SetProp("xPos", 1);
 			B.SetProp("yPos", 0);
 			Vertex C = new Vertex(2);
-			C.SetProp("xPos", 3);
-			C.SetProp("yPos", 1);
+			C.SetProp("xPos", 2);
+			C.SetProp("yPos", 0.5);
 			Vertex D = new Vertex(3);
-			D.SetProp("xPos", 2);
-			D.SetProp("yPos", 2);
+			D.SetProp("xPos", 1);
+			D.SetProp("yPos", 1);
 			Vertex E = new Vertex(4);
 			E.SetProp("xPos", 0);
-			E.SetProp("yPos", 2);
+			E.SetProp("yPos", 1);
 			Vertex[] vertices = new Vertex[] { A, B, C, D, E };
 
 			Edge AB = new Edge(A, B);
@@ -52,10 +53,16 @@ namespace Mathlib
 			CD.SetProp("weight", 2);
 			Edge DE = new Edge(D, E);
 			DE.SetProp("weight", 2);
-			Edge[] edges = new Edge[] { AB, AE, BC, BD, BE, CD, DE };
+
+			// This is to test when multiple edges connect 2 vertices.
+			Edge EB = new Edge(E, B);
+			EB.SetProp("weight", 4);
+
+			Edge[] edges = new Edge[] { AB, AE, BC, BD, BE, CD, DE/*, EB*/ };
 
 			Graph G = new Graph(vertices, edges, false, "Sample Graph");
 			Console.WriteLine(G);
+			G.Save(Commands.RootFolder);
 
 			Console.WriteLine();
 
@@ -72,9 +79,11 @@ namespace Mathlib
 			
 			foreach (Vertex v in G.Vertices)
 			{
-				//Vertex target = C;
 				Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
 			}
+
+			Console.WriteLine();
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2048} {G.Name.Replace(' ', '_')}.graph");
 		}
 	}
 }

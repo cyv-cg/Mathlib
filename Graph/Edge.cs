@@ -1,14 +1,45 @@
-﻿namespace Mathlib.Graphs
+﻿using System.Text.Json;
+using System.Collections.Generic;
+
+namespace Mathlib.Graphs
 {
 	public class Edge : PropertyHolder
 	{
-		public readonly Vertex initial;
-		public readonly Vertex terminal;
+		public Vertex Initial { get; private set; }
+		public Vertex Terminal { get; private set; }
 
 		public Edge(Vertex initial, Vertex terminal)
 		{
-			this.initial = initial;
-			this.terminal = terminal;
+			Initial = initial;
+			Terminal = terminal;
+		}
+
+		protected internal struct EdgeSerializationData
+		{
+			public Vertex Initial { get; private set; }
+			public Vertex Terminal { get; private set; }
+
+			public List<KeyValuePair<string,object>> Properties { get; private set; }
+
+			public EdgeSerializationData(Edge e, params string[] properties)
+			{
+				Initial = e.Initial;
+				Terminal = e.Terminal;
+
+				if (properties.Length > 0)
+				{
+					Properties = new List<KeyValuePair<string, object>>();
+					foreach (string key in properties)
+						Properties.Add(new KeyValuePair<string, object>(key, e.GetProp<object>(key)));
+				}
+				else
+					Properties = null;
+			}
+
+			public override string ToString()
+			{
+				return JsonSerializer.Serialize(this);
+			}
 		}
 	}
 }
