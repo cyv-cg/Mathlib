@@ -17,7 +17,6 @@ namespace Mathlib.Graphs
 		public string IdToAlpha()
 		{
 			string name = "";
-
 			Stack<char> chars = new Stack<char>();
 
 			int index = Id;

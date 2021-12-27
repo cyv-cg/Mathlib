@@ -5,9 +5,28 @@ import numpy as np
 import drawSvg as draw
 from numpy.core.einsumfunc import _einsum_dispatcher
 
+def id_to_alpha(id):
+	name = ""
+	chars = []
+
+	index = id
+
+	while index > 25:
+		remainder = index % 26
+		chars.append(chr(remainder + 65))
+		index = int(index / 26)
+		if index < 26:
+			index = index - 1
+	chars.append(chr(index + 65))
+
+	for i in range (len(chars)):
+		name = name + chars[len(chars) - (i + 1)]
+
+	return name
+
 # This script will be passed a few arguments when called:
 # 1: image resolution
-# 2: JSON string of the graph
+# 2: JSON file of the graph
 
 resolution = int(sys.argv[1])
 radius = int(resolution / 32)
@@ -110,7 +129,8 @@ for i in range(len(edges)):
 for i in range(len(vertices)):
     # Center of the current node.
     # center = positions[i]
-    text = str(vertices[i]['Id'])
+    # text = str(vertices[i]['Id'])
+    text = id_to_alpha(int(vertices[i]['Id']))
 
     # text_size, _ = cv.getTextSize(text, text_face, text_scale, element_thickness)
     # text_origin = (center[0] - int(text_size[0] / 2), center[1] + int(text_size[1] / 2))
@@ -122,7 +142,7 @@ for i in range(len(vertices)):
     origin = (positions[i][0] - plot_size[1]/2, positions[i][1] - plot_size[0]/2)
     d.append(draw.Circle(origin[0], -origin[1], radius, fill='#ffffff', stroke_width=element_thickness, stroke='#000000'))
     # Write the id of the node in the center of the circle.
-    d.append(draw.Text(text, 2 * radius, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
+    d.append(draw.Text(text, 1.8 * radius, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
 
 
 # Save the image in the local directory.

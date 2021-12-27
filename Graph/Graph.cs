@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Collections.Generic;
 using System.IO;
+using System;
 
 namespace Mathlib.Graphs
 {
@@ -136,23 +137,55 @@ namespace Mathlib.Graphs
 			return null;
 		}
 
+		// Harmonic Centrality of a vertex v.
+		// Eq. 3.2 on page 230 of "Axioms for Centrality" (Boldi & Vigna)
 		public double HarmonicCentrality(Vertex v)
 		{
 			double centrality = 0;
 
 			foreach (Vertex u in Vertices)
 			{
+				// Disregard loops. Those always have a distance of zero.
 				if (u == v)
 					continue;
 
-				Vertex[] path = FindPath(u, v).ToArray();
-				if (u.GetProp<int>("distance") == int.MaxValue)
+				// Find the shortest path from u to v. The total length of the path is stored in the v's "distance" property.
+				FindPath(u, v);
+				// If the distance from start (u) to finish (v) is less than zero, that means integer overflow has occured.
+				// This is because vertices that are disconnected from the rest of the graph have a distance of int.MaxValue.
+				// Once the distance from the rest of the path is added to that, it overflows into the negatives.
+				// Hence, if the calculated path distance is negative, the actual distance is infinity, so we do not consider it.
+				if (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0)
 					continue;
 
-				centrality += 1d / path[^1].GetProp<int>("distance");
+				// v's "distance" property is the length of the shortest path between u and v.
+				// Add the reciprocal of the distance to the centrality measure.
+				centrality += 1d / v.GetProp<int>("distance");
 			}
 
 			return centrality;
+		}
+
+		// Closeness of a vertex v.
+		// Eq. 3.1 on page 229 of "Axioms for Centrality" (Boldi & Vigna)
+		public double Closeness(Vertex v, bool patched = true)
+		{
+			double centrality = 0;
+			
+			foreach (Vertex u in Vertices)
+			{
+				if (u == v)
+					continue;
+
+				FindPath(u, v);
+				// Only disregard infinite distances if we are using the "patched" version of the Closeness equation.
+				if (patched && (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0))
+					continue;
+
+				centrality += v.GetProp<int>("distance");
+			}
+
+			return 1d / centrality;
 		}
 
 		public override string ToString()

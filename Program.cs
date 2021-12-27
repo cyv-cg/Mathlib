@@ -37,7 +37,19 @@ namespace Mathlib
 			Vertex E = new Vertex(4);
 			E.SetProp("xPos", 0);
 			E.SetProp("yPos", 1);
-			Vertex[] vertices = new Vertex[] { A, B, C, D, E };
+
+			Vertex F = new Vertex(5);
+			F.SetProp("xPos", 0.5);
+			F.SetProp("yPos", 2);
+
+			Vertex[] vertices = new Vertex[] { 
+				A, 
+				B, 
+				C, 
+				D, 
+				E,
+				//F
+			};
 
 			Edge AB = new Edge(A, B);
 			AB.SetProp("weight", 4);
@@ -58,32 +70,41 @@ namespace Mathlib
 			Edge EB = new Edge(E, B);
 			EB.SetProp("weight", 4);
 
-			Edge[] edges = new Edge[] { AB, AE, BC, BD, BE, CD, DE/*, EB*/ };
+			Edge CF = new Edge(C, F);
+			CF.SetProp("weight", 2);
+			Edge DF = new Edge(D, F);
+			DF.SetProp("weight", 7);
+			Edge EF = new Edge(E, F);
+			EF.SetProp("weight", 343);
+
+			Edge[] edges = new Edge[] { 
+				AB, 
+				AE,
+				BC,
+				BD, 
+				BE,
+				CD,
+				DE, 
+				//EB,
+				//CF,
+				//DF,
+				//EF
+			};
 
 			Graph G = new Graph(vertices, edges, false, "Sample Graph");
 			Console.WriteLine(G);
 			G.Save(Commands.RootFolder);
 
-			Console.WriteLine();
-
-			//Stack<Vertex> path = G.FindPath(A, D);
-			//int pathWeight = 0;
-			//while (path.Count > 0)
-			//{
-			//	Vertex v = path.Pop();
-			//	Console.WriteLine($"{v}");
-			//	pathWeight = v.GetProp<int>("distance");
-			//}
-			//Console.WriteLine($"Distance: {pathWeight}");
-			//Console.WriteLine();
-			
+			// Display the Harmonic Centrality and Closeness of every vertex in G.
 			foreach (Vertex v in G.Vertices)
 			{
+				Console.WriteLine();
 				Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
+				Console.WriteLine($"Closeness of {v}: {G.Closeness(v)}");
 			}
 
 			Console.WriteLine();
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2048} {G.Name.Replace(' ', '_')}.graph");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.graph");
 		}
 	}
 }
