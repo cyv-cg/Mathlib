@@ -1,11 +1,22 @@
 ﻿import sys
 import json
-import cv2 as cv
+# import cv2 as cv
 import numpy as np
 import drawSvg as draw
-from numpy.core.einsumfunc import _einsum_dispatcher
 
+# import pyvips
+
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF, renderPM
+
+# import cairosvg
+
+# This is exactly the same thing that's happening in the C# function in the Vertex class.
 def id_to_alpha(id):
+    # 65 for uppercase
+    # 97 for lowercase
+	alpha_type = 65
+
 	name = ""
 	chars = []
 
@@ -13,16 +24,30 @@ def id_to_alpha(id):
 
 	while index > 25:
 		remainder = index % 26
-		chars.append(chr(remainder + 65))
+		chars.append(chr(remainder + alpha_type))
 		index = int(index / 26)
 		if index < 26:
 			index = index - 1
-	chars.append(chr(index + 65))
+	chars.append(chr(index + alpha_type))
 
 	for i in range (len(chars)):
 		name = name + chars[len(chars) - (i + 1)]
 
 	return name
+
+def normalize_positions():
+	min_x = 0
+	min_y = 0
+	# Find the minimum coordinates.
+	for v in vertices:
+		if v['Properties'][0]['Value'] < min_x:
+			min_x = v['Properties'][0]['Value']
+		if v['Properties'][1]['Value'] < min_y:
+			min_y = v['Properties'][1]['Value']
+	# Offset all coordinates by the minimum to they are normalized around (0, 0).
+	for v in vertices:
+		v['Properties'][0]['Value'] = v['Properties'][0]['Value'] - min_x
+		v['Properties'][1]['Value'] = v['Properties'][1]['Value'] - min_y
 
 # This script will be passed a few arguments when called:
 # 1: image resolution
@@ -45,6 +70,8 @@ data = json.loads(json_str)
 
 vertices = data['Vertices']
 edges = data['Edges']
+
+normalize_positions()
 
 leftmost = 0
 rightmost = 0
@@ -152,3 +179,6 @@ for i in range(len(vertices)):
 file_name = data['Name'].replace(" ", "_") + ".svg"
 print(f"Saved to {file_name}")
 d.saveSvg(file_name)
+
+drawing = svg2rlg("Sample_Graph.svg")
+renderPM.drawToFile(drawing, "file.png", fmt="PNG")
