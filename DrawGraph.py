@@ -164,6 +164,7 @@ for i in range(len(edges)):
 
 		# Draw an arrowhead at the end of the line.
 		# This code is taken straight from the documentation and I don't really get how it works.
+		# For some reason, the arrowheads disappear when converting to png.
 		arrow = draw.Marker(-1, -5, 9, 5, scale=0.5, orient='auto')
 		arrow.append(draw.Lines(-1, -5, -1, 5, 9, 0, fill='#000000', close=True))
 		# Draw a line from start to end.

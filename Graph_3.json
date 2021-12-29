@@ -1,5 +1,5 @@
 {
-  "Name": "Sample Graph",
+  "Name": "Graph 3",
   "Directed": false,
   "Vertices": [
     {
@@ -66,6 +66,19 @@
           "Value": 1
         }
       ]
+    },
+    {
+      "Id": 5,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 0.5
+        },
+        {
+          "Key": "yPos",
+          "Value": 2
+        }
+      ]
     }
   ],
   "Edges": [
@@ -102,20 +115,6 @@
         "Id": 1
       },
       "Terminal": {
-        "Id": 2
-      },
-      "Properties": [
-        {
-          "Key": "weight",
-          "Value": 6
-        }
-      ]
-    },
-    {
-      "Initial": {
-        "Id": 1
-      },
-      "Terminal": {
         "Id": 3
       },
       "Properties": [
@@ -141,10 +140,10 @@
     },
     {
       "Initial": {
-        "Id": 2
+        "Id": 3
       },
       "Terminal": {
-        "Id": 3
+        "Id": 4
       },
       "Properties": [
         {
@@ -155,15 +154,15 @@
     },
     {
       "Initial": {
-        "Id": 3
+        "Id": 4
       },
       "Terminal": {
-        "Id": 4
+        "Id": 5
       },
       "Properties": [
         {
           "Key": "weight",
-          "Value": 2
+          "Value": 343
         }
       ]
     }

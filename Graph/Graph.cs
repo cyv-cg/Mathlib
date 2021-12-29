@@ -230,11 +230,17 @@ namespace Mathlib.Graphs
 
 		public void Save(string path)
 		{
-			string fileName = path + "/" + Name.Replace(" ", "_") + ".graph";
+			string fileName = path + "/" + Name.Replace(" ", "_") + ".json";
 
 			if (!File.Exists(fileName))
-				File.Create(fileName);
-			File.WriteAllText(fileName, JSON());
+			{
+				using StreamWriter writer = File.CreateText(fileName);
+				writer.WriteLine(JSON());
+			}
+			else
+			{
+				File.WriteAllText(fileName, JSON());
+			}
 		}
 
 		private struct GraphSerializationData

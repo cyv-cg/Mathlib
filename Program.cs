@@ -48,7 +48,7 @@ namespace Mathlib
 				C, 
 				D, 
 				E,
-				//F
+				F
 			};
 
 			Edge AB = new Edge(A, B);
@@ -80,18 +80,18 @@ namespace Mathlib
 			Edge[] edges = new Edge[] { 
 				AB, 
 				AE,
-				BC,
+				//BC,
 				BD, 
 				BE,
 				CD,
 				DE, 
 				//EB,
 				//CF,
-				//DF,
-				//EF
+				DF,
+				EF
 			};
 
-			Graph G = new Graph(vertices, edges, false, "Sample Graph");
+			Graph G = new Graph(vertices, edges, true, "Graph 4");
 			Console.WriteLine(G);
 			G.Save(Commands.RootFolder);
 
@@ -104,7 +104,7 @@ namespace Mathlib
 			}
 
 			Console.WriteLine();
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.graph");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.json {G.Directed} {!G.Directed} false");
 		}
 	}
 }
