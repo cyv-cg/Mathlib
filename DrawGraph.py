@@ -1,39 +1,18 @@
 ﻿import sys
+import os
+
 import json
-# import cv2 as cv
 import numpy as np
+
+# This is for creating and writing to the svg image.
 import drawSvg as draw
-
-# import pyvips
-
+# These are for saving the image to other file types.
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF, renderPM
 
-# import cairosvg
-
-# This is exactly the same thing that's happening in the C# function in the Vertex class.
-def id_to_alpha(id):
-    # 65 for uppercase
-    # 97 for lowercase
-	alpha_type = 65
-
-	name = ""
-	chars = []
-
-	index = id
-
-	while index > 25:
-		remainder = index % 26
-		chars.append(chr(remainder + alpha_type))
-		index = int(index / 26)
-		if index < 26:
-			index = index - 1
-	chars.append(chr(index + alpha_type))
-
-	for i in range (len(chars)):
-		name = name + chars[len(chars) - (i + 1)]
-
-	return name
+# Custom utility functions.
+import Python_Scripts.id_to_alpha as id
+import Python_Scripts.get_prop as prop
 
 def normalize_positions():
 	min_x = 0
@@ -49,136 +28,181 @@ def normalize_positions():
 		v['Properties'][0]['Value'] = v['Properties'][0]['Value'] - min_x
 		v['Properties'][1]['Value'] = v['Properties'][1]['Value'] - min_y
 
+def get_plot_size(vertices, radius, padding, scale):
+	leftmost = 0
+	rightmost = 0
+	upmost = 0
+	downmost = 0
+
+	# Calculate the center point of each node, as specified in its properties
+	positions = []
+	for v in vertices:
+		# Get the enumerated coordinate values in the vertex properties and adjust them for the image.
+		x = int(radius + padding + scale * float(prop.get_prop(v, 'xPos')))
+		y = int(radius + padding + scale * float(prop.get_prop(v, 'yPos')))
+		positions.append((x, y))
+		# Find the extreme coordinates.
+		if x < leftmost:
+			leftmost = x
+		if x > rightmost:
+			rightmost = x
+		if y < upmost:
+			upmost = y
+		if y > downmost:
+			downmost = y
+
+	# Return the list of positions for each vertex, as well as the calculated size of the image.
+	return positions, (downmost - upmost + radius + padding, rightmost - leftmost + radius + padding)
+
+# Read optional arguments (if they are given)
+def get_optional_args():
+	svg = True
+	png = False
+	pdf = False
+	# When checking the length of the arguments list, the integer it's compared to is increased by 1, 
+	# because the script call itself is counted as an argument.
+	if len(sys.argv) >= 4:
+		svg = sys.argv[3].lower() == "true"
+	if len(sys.argv) >= 5:
+		png = sys.argv[4].lower() == "true"
+	if len(sys.argv) >= 6:
+		pdf = sys.argv[5].lower() == "true"
+	
+	return svg, png, pdf
+
+def save_file(file_name, d, save_as_svg, save_as_png, save_as_pdf):
+	# Initially save the image as a temporary svg file to be read again into a different data type.
+	d.saveSvg(f"{file_name}_temp.svg")
+
+	# Read as a svglib data type.
+	# This allows svglib to save to other file types.
+	drawing = svg2rlg(f"{file_name}_temp.svg")
+
+	# Save to file types (svg, png, pdf) if desired.
+	if save_as_svg:
+		d.saveSvg(f"{file_name}.svg")
+		print(f"Saved to {file_name}.svg")
+	if save_as_png:
+		renderPM.drawToFile(drawing, f"{file_name}.png", fmt="PNG")
+		print(f"Saved to {file_name}.png")
+	if save_as_pdf:
+		renderPDF.drawToFile(drawing, f"{file_name}.pdf")
+		print(f"Saved to {file_name}.pdf")
+
+	# Delete the temp file.
+	os.remove(f"{file_name}_temp.svg")
+
 # This script will be passed a few arguments when called:
 # 1: image resolution
 # 2: JSON file of the graph
-
+# 3-5: optional arguments determining what file type(s) to save as
 resolution = int(sys.argv[1])
-radius = int(resolution / 32)
-
-padding = 32
-
-scale = int(resolution / 5)
-element_thickness = 4
-# text_face = cv.FONT_HERSHEY_DUPLEX
-# text_scale = 0.01 * scale
-
 file = open(sys.argv[2], "r")
+
+# The radius of the nodes.
+# Calculated as a proportion of the resolution.
+radius = int(resolution / 32)
+# Scale of the elements. Used to adjust the size of the elements based on the image resolution.
+scale = int(resolution / 5)
+# Thickness of things like the stroke width. Scales with resolution.
+element_thickness = 0.01 * scale
+# Extra space around the border of the image.
+# Adds white space between the edge of the nodes and the outside of the image.
+padding = 32 * element_thickness
+
+# Load JSON data from the given file.
 json_str = file.read()
-
 data = json.loads(json_str)
-
+# Extract lists containing vertex and edge data.
 vertices = data['Vertices']
 edges = data['Edges']
 
+# Adjust coordinates so the top-leftmost node is at (0, 0).
 normalize_positions()
+# Cache node positions & calculate image size based on that information.
+positions, plot_size = get_plot_size(vertices, radius, padding, scale)
 
-leftmost = 0
-rightmost = 0
-upmost = 0
-downmost = 0
-
-# Calculate the center point of each node, as specified in its properties
-positions = []
-for v in vertices:
-    x = int(radius + padding + scale * float(v['Properties'][0]['Value']))
-    y = int(radius + padding + scale * float(v['Properties'][1]['Value']))
-    positions.append((x, y))
-
-    if x < leftmost:
-        leftmost = x
-    if x > rightmost:
-        rightmost = x
-    if y < upmost:
-        upmost = y
-    if y > downmost:
-        downmost = y
-
-plot_size = (downmost - upmost + radius + padding, rightmost - leftmost + radius + padding)
-
-# center_x = 0
-# center_y = 0
-# for p in positions:
-#     center_x = center_x + p[0]
-#     center_y = center_y + p[1]
-# center_x = center_x / len(positions)
-# center_y = center_y / len(positions)
-# graph_center = (center_x, center_y)
-
-# Initialize a new image with given resolution.
-img = np.ones((plot_size[0], plot_size[1], 3), dtype=np.uint8) * 255
-
+# Create a new svg image with the previously determined size.
+# Why the x and y coordinates are changed, I'm not sure.
 d = draw.Drawing(plot_size[1], plot_size[0], origin='center', displayInline=False)
-d.append(draw.Rectangle(-plot_size[1]/2, -plot_size[0]/2, plot_size[1], plot_size[0], fill='#ffffff'))
+# Draw a white rectangle taking up the entire image to act as a background.
+d.append(draw.Rectangle(-plot_size[1] / 2, -plot_size[0] / 2, plot_size[1], plot_size[0], fill='#ffffff'))
 
+# Draw the edges and weights, if applicable.
 for i in range(len(edges)):
-    initial = int(edges[i]['Initial']['Id'])
-    terminal = int(edges[i]['Terminal']['Id'])
-    # cv.line(img, positions[initial], positions[terminal], (0, 0, 0), element_thickness, cv.LINE_AA)
+	# Extract the initial and terminal nodes this edge connects to.
+	initial = int(edges[i]['Initial']['Id'])
+	terminal = int(edges[i]['Terminal']['Id'])
 
-    start_x = positions[initial][0] - plot_size[1]/2
-    start_y = positions[initial][1] - plot_size[0]/2
-    end_x = positions[terminal][0] - plot_size[1]/2
-    end_y = positions[terminal][1] - plot_size[0]/2
+	# Cache coordinates of each node.
+	# Half the plot size is subtracted so the math is centered around the top-left corner instead of the middle of the image.
+	start_x = positions[initial][0] - plot_size[1] / 2
+	start_y = positions[initial][1] - plot_size[0] / 2
+	end_x = positions[terminal][0] - plot_size[1] / 2
+	end_y = positions[terminal][1] - plot_size[0] / 2
     
-    dx = start_x - end_x
-    dy = start_y - end_y
+	# Find the slopes of the line connecting the node.
+	dx = start_x - end_x
+	dy = start_y - end_y
 
-    back_unit_vector = (dx / np.sqrt(dx*dx + dy*dy), dy / np.sqrt(dx*dx + dy*dy))
+	# Calculate the unit vector pointing from the terminal node to the initial node.
+	magnitude = np.sqrt(dx*dx + dy*dy)
+	back_unit_vector = (dx / magnitude, dy / magnitude)
 
-    text_origin = (int((start_x + end_x) / 2), int((start_y + end_y) / 2))
+	# Place the origin of the text at the average point of the line.
+	text_origin = (int((start_x + end_x) / 2), int((start_y + end_y) / 2))
 
-    if data['Directed']:
-        end_x = end_x + 1.3 * radius * back_unit_vector[0]
-        end_y = end_y + 1.3 * radius * back_unit_vector[1]
-        
-        text_origin = (end_x + 30 * back_unit_vector[0], end_y + 30 * back_unit_vector[1])
+	# Only perform if the graph is directed.
+	if data['Directed']:
+		# Move the text origin 30% of the way from the terminal to initial node.
+		# This way, in a digraph, the edge weight is writted closer to the node it enters instead of the average point of the line.
+		# This ensures that in a 2-way connection, the weights are not written on top of each other.
+		end_x = end_x + 1.3 * radius * back_unit_vector[0]
+		end_y = end_y + 1.3 * radius * back_unit_vector[1]
+        # Scale the positions back up (since they were calculated based on a unit vector) and reset the origin point.
+		text_origin = (end_x + 30 * back_unit_vector[0], end_y + 30 * back_unit_vector[1])
 
-        arrow = draw.Marker(-1, -5, 9, 5, scale=0.5, orient='auto')
-        arrow.append(draw.Lines(-1, -5, -1, 5, 9, 0, fill='#000000', close=True))
-        d.append(draw.Line(start_x, -start_y, end_x, -end_y, stroke_width=element_thickness, stroke='#000000', marker_end=arrow))
-    else:
-        d.append(draw.Line(start_x, -start_y, end_x, -end_y, stroke_width=element_thickness, stroke='#000000'))
+		# Draw an arrowhead at the end of the line.
+		# This code is taken straight from the documentation and I don't really get how it works.
+		arrow = draw.Marker(-1, -5, 9, 5, scale=0.5, orient='auto')
+		arrow.append(draw.Lines(-1, -5, -1, 5, 9, 0, fill='#000000', close=True))
+		# Draw a line from start to end.
+		d.append(draw.Line(start_x, -start_y, end_x, -end_y, stroke_width=element_thickness, stroke='#000000', marker_end=arrow))
+	# Only perform if the graph is *not* directed.
+	else:
+		# Draw a straight line from the initial to the terminal node.
+		d.append(draw.Line(start_x, -start_y, end_x, -end_y, stroke_width=element_thickness, stroke='#000000'))
 
-    weight = int(edges[i]['Properties'][0]['Value'])
-    # cv.putText(img, str(weight), text_origin, text_face, text_scale * 0.75, (0, 0, 255), int(element_thickness * 0.75), cv.LINE_AA)
-    
-    offset_x = 0
-    offset_y = 0 
+	# Get the weight of this edge.
+	weight = int(prop.get_prop(edges[i], 'weight'))
+	# If the edge has a weight property.
+	if weight != None:
+		# Calculate some offset to try to get the text off of the line.
+		offset_x = 0
+		offset_y = 0 
+		# Find which direction to offset the text.
+		if dy > dx:
+			offset_y = 30
+		else:
+			offset_x = 30
+		# Write the text at the calculated + offset position.
+		d.append(draw.Text(str(weight), 0.75 * radius, text_origin[0] - offset_x, -text_origin[1] + offset_y, fill='#ff0000', text_anchor='middle', valign='middle'))
 
-    if dy > dx:
-        offset_y = 30
-    else:
-        offset_x = 30
-
-    d.append(draw.Text(str(weight), 0.75 * radius, text_origin[0] - offset_x, -text_origin[1] + offset_y, fill='#ff0000', text_anchor='middle', valign='middle'))
-
+# Draw nodes.
 for i in range(len(vertices)):
-    # Center of the current node.
-    # center = positions[i]
-    # text = str(vertices[i]['Id'])
-    text = id_to_alpha(int(vertices[i]['Id']))
+	# Convert integer id to alpha name.
+    text = id.id_to_alpha(int(vertices[i]['Id']))
 
-    # text_size, _ = cv.getTextSize(text, text_face, text_scale, element_thickness)
-    # text_origin = (center[0] - int(text_size[0] / 2), center[1] + int(text_size[1] / 2))
-
-    # cv.circle(img, center, radius, (255, 255, 255), -1)
-    # cv.circle(img, center, radius, (0, 0, 0), element_thickness, cv.LINE_AA)
-    # cv.putText(img, text, text_origin, text_face, text_scale, (0, 0, 0), element_thickness, cv.LINE_AA)
-
+	# Find origin point of the node.
     origin = (positions[i][0] - plot_size[1]/2, positions[i][1] - plot_size[0]/2)
+	# Draw a circle centered at that origin with radius as calculated above.
     d.append(draw.Circle(origin[0], -origin[1], radius, fill='#ffffff', stroke_width=element_thickness, stroke='#000000'))
-    # Write the id of the node in the center of the circle.
+    # Write the id/name of the node in the center of the circle.
     d.append(draw.Text(text, 1.8 * radius, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
 
-
-# Save the image in the local directory.
-# file_name = data['Name'].replace(" ", "_") + ".png"
-# cv.imwrite(file_name, img)
-
-file_name = data['Name'].replace(" ", "_") + ".svg"
-print(f"Saved to {file_name}")
-d.saveSvg(file_name)
-
-drawing = svg2rlg("Sample_Graph.svg")
-renderPM.drawToFile(drawing, "file.png", fmt="PNG")
+# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
+file_name = data['Name'].replace(" ", "_")
+# Get optional arguments from the command line, indicating what file types to save to.
+save_as_svg, save_as_png, save_as_pdf = get_optional_args()
+# Save the image to the specified file types.
+save_file(file_name, d, save_as_svg, save_as_png, save_as_pdf)
