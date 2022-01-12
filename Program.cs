@@ -77,21 +77,21 @@ namespace Mathlib
 			Edge EF = new Edge(E, F);
 			EF.SetProp("weight", 343);
 
-			Edge[] edges = new Edge[] { 
-				AB, 
+			Edge[] edges = new Edge[] {
+				AB,
 				AE,
 				//BC,
-				BD, 
+				BD,
 				BE,
-				CD,
-				DE, 
+				//CD,
+				DE,
 				//EB,
 				//CF,
-				DF,
-				EF
+				//DF,
+				//EF
 			};
 
-			Graph G = new Graph(vertices, edges, true, "Graph 4");
+			Graph G = new Graph(vertices, edges, false, "New Graph");
 			Console.WriteLine(G);
 			G.Save(Commands.RootFolder);
 

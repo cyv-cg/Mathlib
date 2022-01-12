@@ -1,5 +1,5 @@
 {
-  "Name": "Graph 3",
+  "Name": "New Graph",
   "Directed": false,
   "Vertices": [
     {
@@ -149,20 +149,6 @@
         {
           "Key": "weight",
           "Value": 2
-        }
-      ]
-    },
-    {
-      "Initial": {
-        "Id": 4
-      },
-      "Terminal": {
-        "Id": 5
-      },
-      "Properties": [
-        {
-          "Key": "weight",
-          "Value": 343
         }
       ]
     }

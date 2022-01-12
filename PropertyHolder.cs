@@ -32,14 +32,14 @@ namespace Mathlib
 			}
 		}
 
-		public static I ItemWithMinProp<T, I>(I[] items, string property) where T : IComparable where I : PropertyHolder
+		public static TItem ItemWithMinProp<TValue, TItem>(TItem[] items, string property) where TValue : IComparable where TItem : PropertyHolder
 		{
 			try
 			{
-				I itemWithMinVal = items[0];
+				TItem itemWithMinVal = items[0];
 				for (int i = 1; i < items.Length; i++)
 				{
-					if (items[i].GetProp<T>(property).CompareTo(itemWithMinVal.GetProp<T>(property)) < 0)
+					if (items[i].GetProp<TValue>(property).CompareTo(itemWithMinVal.GetProp<TValue>(property)) < 0)
 						itemWithMinVal = items[i];
 				}
 				return itemWithMinVal;

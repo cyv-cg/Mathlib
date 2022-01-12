@@ -78,12 +78,14 @@ namespace Mathlib.Graphs
 			{
 				// Technically, the distance should be initialized to infinity.
 				v.SetProp("distance", int.MaxValue);
+				v.SetProp("isInfiniteDistance", true);
 				v.SetProp<Vertex>("predecessor", null);
 				// Add every vertex to the list under consideration.
 				Q.Add(v);
 			}
 			// Set the distance from the source to the source (that's zero).
 			source.SetProp("distance", 0);
+			source.SetProp("isInfiniteDistance", false);
 
 			// Loop as long as there are still vertices to visit.
 			while (Q.Count > 0)
@@ -128,6 +130,9 @@ namespace Mathlib.Graphs
 						{
 							// Update its distance and predecessor.
 							v.SetProp("distance", alt);
+							// If the predecessor is infinitely far away, then this one is as well.
+							// Otherwise, this node is also a finite distance.
+							v.SetProp("isInfiniteDistance", u.GetProp<bool>("isInfiniteDistance"));
 							v.SetProp("predecessor", u);
 						}
 					}
@@ -145,7 +150,7 @@ namespace Mathlib.Graphs
 
 			foreach (Vertex u in Vertices)
 			{
-				// Disregard loops. Those always have a distance of zero.
+				// Disregard loops. Those always have a minimum distance of zero.
 				if (u == v)
 					continue;
 
@@ -155,7 +160,11 @@ namespace Mathlib.Graphs
 				// This is because vertices that are disconnected from the rest of the graph have a distance of int.MaxValue.
 				// Once the distance from the rest of the path is added to that, it overflows into the negatives.
 				// Hence, if the calculated path distance is negative, the actual distance is infinity, so we do not consider it.
-				if (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0)
+				// Of course, this assumes all edges have a nonneegative weight and may potentially not be true with multiple
+				// nodes with int.MaxValue distance.
+				if (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0
+					// Alternatively, if the distance is explicitly stated as infinite.
+					|| v.GetProp<bool>("isInfiniteDistance"))
 					continue;
 
 				// v's "distance" property is the length of the shortest path between u and v.
