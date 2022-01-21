@@ -26,11 +26,12 @@ namespace Mathlib.Graphs
 				Initial = e.Initial;
 				Terminal = e.Terminal;
 
-				if (properties.Length > 0)
+				if (properties != null && properties.Length > 0)
 				{
 					Properties = new List<KeyValuePair<string, object>>();
 					foreach (string key in properties)
-						Properties.Add(new KeyValuePair<string, object>(key, e.GetProp<object>(key)));
+						if (e.HasProp(key))
+							Properties.Add(new KeyValuePair<string, object>(key, e.GetProp<object>(key)));
 				}
 				else
 					Properties = null;

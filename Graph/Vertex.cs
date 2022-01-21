@@ -59,11 +59,12 @@ namespace Mathlib.Graphs
 			{
 				Id = v.Id;
 
-				if (properties.Length > 0)
+				if (properties != null && properties.Length > 0)
 				{
 					Properties = new List<KeyValuePair<string, object>>();
 					foreach (string key in properties)
-						Properties.Add(new KeyValuePair<string, object>(key, v.GetProp<object>(key)));
+						if (v.HasProp(key))
+							Properties.Add(new KeyValuePair<string, object>(key, v.GetProp<object>(key)));
 				}
 				else
 					Properties = null;

@@ -18,8 +18,8 @@ namespace Mathlib.Graphs
 		
 		public Graph(Vertex[] vertices, Edge[] edges, bool directed = false, string name = "New Graph")
 		{
-			this.Name = name;
-			this.Directed = directed;
+			Name = name;
+			Directed = directed;
 
 			Vertices = new List<Vertex>();
 			Edges = new List<Edge>();
@@ -29,6 +29,30 @@ namespace Mathlib.Graphs
 				AddVertex(v);
 			foreach (Edge e in edges)
 				AddEdge(e);
+		}
+
+		public static Graph CreateWheelGraph(int spokes, bool directed = false, string name = "New Wheel Graph")
+		{
+			Vertex[] verts = new Vertex[spokes + 1];
+			Edge[] edges = new Edge[spokes];
+
+			verts[0] = new Vertex(0);
+			verts[0].SetProp("xPos", 0.0);
+			verts[0].SetProp("yPos", 0.0);
+
+			for (int i = 1; i < verts.Length; i++)
+			{
+				verts[i] = new Vertex(i);
+
+				double angle = 2 * Math.PI * ((double)(i - 1) / spokes);
+				verts[i].SetProp("xPos", Math.Cos(angle));
+				verts[i].SetProp("yPos", -Math.Sin(angle));
+
+				edges[i - 1] = new Edge(verts[0], verts[i]);
+				edges[i - 1].SetProp("weight", new Random().Next(1, 16));
+			}
+
+			return new Graph(verts, edges, directed, name);
 		}
 
 		public void AddVertex(Vertex v)
@@ -123,7 +147,10 @@ namespace Mathlib.Graphs
 					{
 						// Compute the distance to this vertex.
 						// This is done by getting the distance to its predecessor and adding the weight of the edge connecting them.
-						int alt = u.GetProp<int>("distance") + GetEdge(u, v).GetProp<int>("weight");
+						int weight = 1;
+						if (GetEdge(u, v).HasProp("weight"))
+							weight = GetEdge(u, v).GetProp<int>("weight");
+						int alt = u.GetProp<int>("distance") + weight;
 						// If the newly computed distance is less than the existing distance, then a shorter path there has been discovered.
 						// Thus we update its properties accordingly.
 						if (alt < v.GetProp<int>("distance"))
@@ -228,27 +255,27 @@ namespace Mathlib.Graphs
 			return graph;
 		}
 
-		public string JSON(bool writeIndented = true)
+		public string JSON(string[] vertexProps, string[] edgeProps, bool writeIndented = true)
 		{
 			JsonSerializerOptions options = new JsonSerializerOptions
 			{
 				WriteIndented = writeIndented
 			};
-			return JsonSerializer.Serialize(new GraphSerializationData(this), options);
+			return JsonSerializer.Serialize(new GraphSerializationData(this, vertexProps, edgeProps), options);
 		}
 
-		public void Save(string path)
+		public void Save(string path, string[] vertexProps = null, string[] edgeProps = null)
 		{
 			string fileName = path + "/" + Name.Replace(" ", "_") + ".json";
 
 			if (!File.Exists(fileName))
 			{
 				using StreamWriter writer = File.CreateText(fileName);
-				writer.WriteLine(JSON());
+				writer.WriteLine(JSON(vertexProps, edgeProps));
 			}
 			else
 			{
-				File.WriteAllText(fileName, JSON());
+				File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
 			}
 		}
 
@@ -261,7 +288,7 @@ namespace Mathlib.Graphs
 			public List<Vertex.VertexSerializationData> Vertices { get; private set; }
 			public List<Edge.EdgeSerializationData> Edges { get; private set; }
 
-			public GraphSerializationData(Graph G)
+			public GraphSerializationData(Graph G, string[] vertexProps, string[] edgeProps)
 			{
 				Name = G.Name;
 				Directed = G.Directed;
@@ -270,9 +297,9 @@ namespace Mathlib.Graphs
 				Edges = new List<Edge.EdgeSerializationData>();
 
 				foreach (Vertex v in G.Vertices)
-					Vertices.Add(new Vertex.VertexSerializationData(v, "xPos", "yPos"));
+					Vertices.Add(new Vertex.VertexSerializationData(v, vertexProps));
 				foreach (Edge e in G.Edges)
-					Edges.Add(new Edge.EdgeSerializationData(e, "weight"));
+					Edges.Add(new Edge.EdgeSerializationData(e, edgeProps));
 			}
 
 			public override string ToString()

@@ -175,7 +175,7 @@ for i in range(len(edges)):
 		d.append(draw.Line(start_x, -start_y, end_x, -end_y, stroke_width=element_thickness, stroke='#000000'))
 
 	# Get the weight of this edge.
-	weight = int(prop.get_prop(edges[i], 'weight'))
+	weight = prop.get_prop(edges[i], 'weight')
 	# If the edge has a weight property.
 	if weight != None:
 		# Calculate some offset to try to get the text off of the line.

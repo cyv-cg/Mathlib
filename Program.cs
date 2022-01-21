@@ -91,9 +91,10 @@ namespace Mathlib
 				//EF
 			};
 
-			Graph G = new Graph(vertices, edges, false, "New Graph");
+			//Graph G = new Graph(vertices, edges, false, "New Graph");
+			Graph G = Graph.CreateWheelGraph(10);
 			Console.WriteLine(G);
-			G.Save(Commands.RootFolder);
+			G.Save(Commands.RootFolder, new string[] { "xPos", "yPos" }, new string[] { "weight" });
 
 			// Display the Harmonic Centrality and Closeness of every vertex in G.
 			foreach (Vertex v in G.Vertices)
@@ -104,7 +105,7 @@ namespace Mathlib
 			}
 
 			Console.WriteLine();
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.json {G.Directed} {!G.Directed} false");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.json {true} {!G.Directed} false");
 		}
 	}
 }
