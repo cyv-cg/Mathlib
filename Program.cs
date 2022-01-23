@@ -52,30 +52,30 @@ namespace Mathlib
 			};
 
 			Edge AB = new Edge(A, B);
-			//AB.SetProp(Edge.WEIGHT, 4.0);
+			AB.SetProp(Edge.WEIGHT, 4.0);
 			Edge AE = new Edge(A, E);
-			//AE.SetProp(Edge.WEIGHT, 3.0);
+			AE.SetProp(Edge.WEIGHT, 3.0);
 			Edge BC = new Edge(B, C);
-			//BC.SetProp(Edge.WEIGHT, 6.0);
+			BC.SetProp(Edge.WEIGHT, 6.0);
 			Edge BD = new Edge(B, D);
-			//BD.SetProp(Edge.WEIGHT, 4.0);
+			BD.SetProp(Edge.WEIGHT, 4.0);
 			Edge BE = new Edge(B, E);
-			//BE.SetProp(Edge.WEIGHT, 8.0);
+			BE.SetProp(Edge.WEIGHT, 8.0);
 			Edge CD = new Edge(C, D);
-			//CD.SetProp(Edge.WEIGHT, 2.0);
+			CD.SetProp(Edge.WEIGHT, 2.0);
 			Edge DE = new Edge(D, E);
-			//DE.SetProp(Edge.WEIGHT, 2.0);
+			DE.SetProp(Edge.WEIGHT, 2.0);
 
 			// This is to test when multiple edges connect 2 vertices.
 			Edge EB = new Edge(E, B);
-			//EB.SetProp(Edge.WEIGHT, 4.0);
+			EB.SetProp(Edge.WEIGHT, 4.0);
 
 			Edge CF = new Edge(C, F);
-			//CF.SetProp(Edge.WEIGHT, 2.0);
+			CF.SetProp(Edge.WEIGHT, 2.0);
 			Edge DF = new Edge(D, F);
-			//DF.SetProp(Edge.WEIGHT, 7.0);
+			DF.SetProp(Edge.WEIGHT, 7.0);
 			Edge EF = new Edge(E, F);
-			//EF.SetProp(Edge.WEIGHT, 343.0);
+			EF.SetProp(Edge.WEIGHT, 343.0);
 
 			Edge[] edges = new Edge[] {
 				AB,
@@ -83,7 +83,7 @@ namespace Mathlib
 				//BC,
 				BD,
 				BE,
-				//CD,
+				CD,
 				DE,
 				//EB,
 				//CF,
@@ -91,27 +91,27 @@ namespace Mathlib
 				//EF
 			};
 
-			Graph G = new Graph(vertices, edges, "New Graph", false);
+			Graph G = new Graph(vertices, edges, "G", false, false);
 			Console.WriteLine(G);
-			G.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
+			G.Save(Commands.RootFolder + "_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
 
 			//Graph wheelGraph = Graph.CreateWheelGraph(10);
 			//wheelGraph.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y });
 
 			// Display the Harmonic Centrality and Closeness of every vertex in G.
-			//foreach (Vertex v in G.Vertices)
-			//{
-			//	Console.WriteLine();
-			//	Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
-			//	Console.WriteLine($"Closeness of {v}: {G.Closeness(v)}");
-			//}
+			foreach (Vertex v in G.Vertices)
+			{
+				Console.WriteLine();
+				Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
+				Console.WriteLine($"Closeness of {v}: {G.Closeness(v)}");
+			}
 
 			Console.WriteLine();
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{G.Name.Replace(' ', '_')}.json {true} {false} {false}");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{G.Name.Replace(' ', '_')}.json _outputs {true} {false} {false}");
 
-			Graph BFS = G.BreadthFirstSearch(A);
-			BFS.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{BFS.Name.Replace(' ', '_')}.json {true} {false} {false}");
+			Graph H = G.Subgraph(D, 1);
+			H.Save(Commands.RootFolder + "_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{H.Name.Replace(' ', '_')}.json _outputs {true} {false} {false}");
 		}
 	}
 }

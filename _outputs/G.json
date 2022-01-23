@@ -1,5 +1,5 @@
 {
-  "Name": "New Graph",
+  "Name": "G",
   "Directed": false,
   "Weighted": false,
   "Vertices": [
@@ -90,7 +90,7 @@
       "Terminal": {
         "Id": 1
       },
-      "Properties": []
+      "Properties": null
     },
     {
       "Initial": {
@@ -99,7 +99,7 @@
       "Terminal": {
         "Id": 4
       },
-      "Properties": []
+      "Properties": null
     },
     {
       "Initial": {
@@ -108,7 +108,7 @@
       "Terminal": {
         "Id": 3
       },
-      "Properties": []
+      "Properties": null
     },
     {
       "Initial": {
@@ -117,7 +117,16 @@
       "Terminal": {
         "Id": 4
       },
-      "Properties": []
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 2
+      },
+      "Terminal": {
+        "Id": 3
+      },
+      "Properties": null
     },
     {
       "Initial": {
@@ -126,7 +135,7 @@
       "Terminal": {
         "Id": 4
       },
-      "Properties": []
+      "Properties": null
     }
   ]
 }

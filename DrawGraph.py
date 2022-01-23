@@ -57,19 +57,25 @@ def get_plot_size(vertices, radius, padding, scale):
 
 # Read optional arguments (if they are given)
 def get_optional_args():
+	folder = ""
+	if len(sys.argv) >= 4:
+		folder = sys.argv[3]
+	if (len(folder) > 0):
+		folder = folder + "/"
+
 	svg = True
 	png = False
 	pdf = False
 	# When checking the length of the arguments list, the integer it's compared to is increased by 1, 
 	# because the script call itself is counted as an argument.
-	if len(sys.argv) >= 4:
-		svg = sys.argv[3].lower() == "true"
 	if len(sys.argv) >= 5:
-		png = sys.argv[4].lower() == "true"
+		svg = sys.argv[4].lower() == "true"
 	if len(sys.argv) >= 6:
-		pdf = sys.argv[5].lower() == "true"
+		png = sys.argv[5].lower() == "true"
+	if len(sys.argv) >= 7:
+		pdf = sys.argv[6].lower() == "true"
 	
-	return svg, png, pdf
+	return folder, svg, png, pdf
 
 def save_file(file_name, d, save_as_svg, save_as_png, save_as_pdf):
 	# Initially save the image as a temporary svg file to be read again into a different data type.
@@ -206,8 +212,8 @@ try:
 	# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
 	file_name = data['Name'].replace(" ", "_")
 	# Get optional arguments from the command line, indicating what file types to save to.
-	save_as_svg, save_as_png, save_as_pdf = get_optional_args()
+	folder, save_as_svg, save_as_png, save_as_pdf = get_optional_args()
 	# Save the image to the specified file types.
-	save_file("_outputs/" + file_name, d, save_as_svg, save_as_png, save_as_pdf)
+	save_file(folder + file_name, d, save_as_svg, save_as_png, save_as_pdf)
 except Exception as e:
 	print(e)

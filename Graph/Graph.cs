@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 
+using Mathlib.Arrays;
+
 namespace Mathlib.Graphs
 {
 	public class Graph
@@ -17,6 +19,8 @@ namespace Mathlib.Graphs
 		public List<Edge> Edges { get; private set; }
 
 		public Dictionary<Vertex, List<Vertex>> AdjList { get; private set; }
+
+		private string fileName;
 		#endregion
 		#region Construction
 		public Graph(Vertex[] vertices, Edge[] edges, string name = "New Graph", bool directed = false, bool weighted = false)
@@ -69,19 +73,6 @@ namespace Mathlib.Graphs
 			// Once these properties are set, it is as simple as creating any other graph.
 			return new Graph(verts, edges, name, directed);
 		}
-
-		public void AddVertex(Vertex v)
-		{
-			AdjList.Add(v, new List<Vertex>());
-			Vertices.Add(v);
-		}
-		public void AddEdge(Edge e)
-		{
-			AdjList[e.Initial].Add(e.Terminal);
-			if (!Directed)
-				AdjList[e.Terminal].Add(e.Initial);
-			Edges.Add(e);
-		}
 		#endregion
 
 		#region Accessors
@@ -104,7 +95,105 @@ namespace Mathlib.Graphs
 			return null;
 		}
 		#endregion
+		#region Mutators
+		public void AddVertex(Vertex v)
+		{
+			if (AdjList.ContainsKey(v))
+				throw new ArgumentException($"{Name} already contains vertex with ID '{v.Id}.'");
+			if (v == null)
+				throw new ArgumentNullException($"Vertex cannot be null.");
 
+			AdjList.Add(v, new List<Vertex>());
+			Vertices.Add(v);
+		}
+		public void AddEdge(Edge e)
+		{
+			if (e == null)
+				throw new ArgumentNullException($"Edge cannot be null.");
+
+			AdjList[e.Initial].Add(e.Terminal);
+			if (!Directed)
+				AdjList[e.Terminal].Add(e.Initial);
+			Edges.Add(e);
+		}
+
+		public void Rename(string name)
+		{
+			//string path = fileName.Replace($"{Name}.json", "");
+
+			//if (File.Exists(fileName))
+			//	File.Move(fileName, $"{path}{name}.json");
+
+			//if (File.Exists(fileName.Replace(".json", ".svg")))
+			//	File.Move(fileName.Replace(".json", ".svg"), $"{path}{name}.json".Replace(".json", ".svg"));
+			//if (File.Exists(fileName.Replace(".json", ".png")))
+			//	File.Move(fileName.Replace(".json", ".png"), $"{path}{name}.json".Replace(".json", ".png"));
+			//if (File.Exists(fileName.Replace(".json", ".pdf")))
+			//	File.Move(fileName.Replace(".json", ".pdf"), $"{path}{name}.json".Replace(".json", ".pdf"));
+
+			Name = name;
+		}
+		#endregion
+
+		/// <summary>
+		/// Find a subgraph with a given source vertex and radius.
+		/// </summary>
+		/// <param name="source">The first vertex added to the subgraph, from which the graph grows.</param>
+		/// <param name="radius">Maximum unweighted distance from the source vertex.</param>
+		/// <returns></returns>
+		public Graph Subgraph(Vertex source, int radius)
+		{
+			// Initialize relevant properties to the default value.
+			foreach (Vertex v in Vertices)
+			{
+				v.SetProp("radius", int.MaxValue);
+				v.SetProp("isInfiniteRadius", true);
+			}
+
+			List<Vertex> vertices = new List<Vertex>();
+			List<Edge> edges = new List<Edge>();
+
+			// Set the properties of the source vertex.
+			source.SetProp("radius", 0);
+			source.SetProp("isInfiniteRadius", false);
+			// Create a queue which handles the processing order.
+			Queue<Vertex> Q = new Queue<Vertex>();
+			Q.Enqueue(source);
+
+			// Repeat while there are still vertices in the queue.
+			while (Q.Count > 0)
+			{
+				// Retrieve the next vertex.
+				Vertex u = Q.Dequeue();
+				// Get all the neighbors of u.
+				Vertex[] neighbors = Neighbors(u);
+				foreach (Vertex v in neighbors)
+				{
+					// Only update properties if a shorter path is found.
+					// This avoids instances where cycles repeatedly increment their values.
+					if (u.GetProp<int>("radius") + 1 < v.GetProp<int>("radius"))
+					{
+						v.SetProp("radius", u.GetProp<int>("radius") + 1);
+						v.SetProp("isInfiniteRadius", u.GetProp<bool>("isInfiniteRadius"));
+					}
+					// Only consider neighbors that are within the specified radius.
+					if (v.GetProp<int>("radius") <= radius)
+					{
+						// Get the edge connecting u to its neighbor.
+						edges.Add(GetEdge(u, v));
+						// Enqueue neighbors if they have not already been discovered.
+						if (!vertices.Contains(v) && !Q.Contains(v))
+							Q.Enqueue(v);
+					}
+				}
+				// Add the fully processed vertex to the list.
+				vertices.Add(u);
+			}
+
+			return new Graph(vertices.ToArray(), edges.ToArray(), $"Subgraph of {Name} at {source} with radius {radius}", Directed, Weighted);
+		}
+
+		#region Pathfinding
 		// Single-source shortest path finding via Dijkstra's Algorithm.
 		// src: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 		public Stack<Vertex> FindPath(Vertex source, Vertex target)
@@ -274,6 +363,7 @@ namespace Mathlib.Graphs
 			// This is the BFS tree staring at the source vertex.
 			return new Graph(tree.ToArray(), edges.ToArray(), $"BFS Tree of {Name} from {source}", Directed, Weighted);
 		}
+		#endregion
 
 		#region Centrality measures
 		// Harmonic Centrality of a vertex v.
@@ -282,21 +372,48 @@ namespace Mathlib.Graphs
 		{
 			double centrality = 0;
 
-			foreach (Vertex u in Vertices)
+			if (!Directed)
 			{
-				// Disregard loops. Those always have a minimum distance of zero.
-				if (u == v)
-					continue;
+				// Perform a breadth-first search on the graph, starting at v.
+				// This returns a new graph that contains all vertices of this graph that have a finite distance from v.
+				// Also, the vertices in this new graph already have the length of the shortest path saved in the "distance" property.
+				// These facts allow for the infinite distance logic check to be removed in the summation.
+				// On top of all that, this method only needs to be called once to find the shortest path from v to every other vertex.
+				// The downside of this is that it reverses the order in which it searches for edges.
+				// The equation calls for the shortest path from u to v, but the BFS from v finds the shortest path from v to u.
+				// Hence this method will only work properly for undirected graphs.
+				Graph bfsTree = BreadthFirstSearch(v);
 
-				// Find the shortest path from u to v. The total length of the path is stored in the v's "distance" property.
-				FindPath(u, v);
-				// Ignore if the distance is explicitly stated as infinite.
-				if (v.GetProp<bool>("isInfiniteDistance"))
-					continue;
+				foreach (Vertex u in bfsTree.Vertices)
+				{
+					// Disregard loops. Those always have a minimum distance of zero.
+					if (u == v)
+						continue;
 
-				// v's "distance" property is the length of the shortest path between u and v.
-				// Add the reciprocal of the distance to the centrality measure.
-				centrality += 1d / v.GetProp<double>("distance");
+					// v's "distance" property is the length of the shortest path between u and v.
+					// Add the reciprocal of the distance to the centrality measure.
+					centrality += 1d / u.GetProp<double>("distance");
+				}
+			}
+			else
+			{
+				foreach (Vertex u in Vertices)
+				{
+					// Disregard loops. Those always have a minimum distance of zero.
+					if (u == v)
+						continue;
+
+					// Find the shortest path from u to v. The total length of the path is stored in the v's "distance" property.
+					// In the case of a directed graph, it is simpler to find the path in every iteration.
+					FindPath(u, v);
+					// Ignore if the distance is explicitly stated as infinite.
+					if (v.GetProp<bool>("isInfiniteDistance"))
+						continue;
+
+					// v's "distance" property is the length of the shortest path between u and v.
+					// Add the reciprocal of the distance to the centrality measure.
+					centrality += 1d / v.GetProp<double>("distance");
+				}
 			}
 
 			return centrality;
@@ -304,21 +421,37 @@ namespace Mathlib.Graphs
 
 		// Closeness of a vertex v.
 		// Eq. 3.1 on page 229 of "Axioms for Centrality" (Boldi & Vigna)
-		public double Closeness(Vertex v, bool patched = true)
+		public double Closeness(Vertex v)
 		{
 			double centrality = 0;
-			
-			foreach (Vertex u in Vertices)
+
+			if (!Directed)
 			{
-				if (u == v)
-					continue;
+				// Like in the harmonic centrality, the BFS method will only work properly in an undirected graph.
+				Graph bfsTree = BreadthFirstSearch(v);
 
-				FindPath(u, v);
-				// Only disregard infinite distances if we are using the "patched" version of the Closeness equation.
-				if (patched && v.GetProp<bool>("isInfiniteDistance"))
-					continue;
+				foreach (Vertex u in bfsTree.Vertices)
+				{
+					if (u == v)
+						continue;
 
-				centrality += v.GetProp<double>("distance");
+					centrality += u.GetProp<double>("distance");
+				}
+			}
+			else
+			{
+				foreach (Vertex u in Vertices)
+				{
+					if (u == v)
+						continue;
+
+					FindPath(u, v);
+					// Disregard infinite distances.
+					if (v.GetProp<bool>("isInfiniteDistance"))
+						continue;
+
+					centrality += v.GetProp<double>("distance");
+				}
 			}
 
 			return 1d / centrality;
@@ -368,7 +501,7 @@ namespace Mathlib.Graphs
 
 		public void Save(string path, string[] vertexProps = null, string[] edgeProps = null)
 		{
-			string fileName = path + "/" + Name.Replace(" ", "_") + ".json";
+			fileName = path + "/" + Name.Replace(" ", "_") + ".json";
 
 			if (!File.Exists(fileName))
 			{
@@ -399,6 +532,9 @@ namespace Mathlib.Graphs
 
 				Vertices = new List<Vertex.VertexSerializationData>();
 				Edges = new List<Edge.EdgeSerializationData>();
+
+				if (!Weighted)
+					edgeProps = edgeProps.Difference(new string[] { Edge.WEIGHT });
 
 				foreach (Vertex v in G.Vertices)
 					Vertices.Add(new Vertex.VertexSerializationData(v, vertexProps));

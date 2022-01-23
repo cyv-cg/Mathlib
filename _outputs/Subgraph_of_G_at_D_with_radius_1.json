@@ -1,18 +1,18 @@
 {
-  "Name": "BFS Tree of New Graph from A",
+  "Name": "Subgraph of G at D with radius 1",
   "Directed": false,
   "Weighted": false,
   "Vertices": [
     {
-      "Id": 0,
+      "Id": 3,
       "Properties": [
         {
           "Key": "xPos",
-          "Value": 0
+          "Value": 1
         },
         {
           "Key": "yPos",
-          "Value": 0
+          "Value": 1
         }
       ]
     },
@@ -30,6 +30,19 @@
       ]
     },
     {
+      "Id": 2,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 2
+        },
+        {
+          "Key": "yPos",
+          "Value": 0.5
+        }
+      ]
+    },
+    {
       "Id": 4,
       "Properties": [
         {
@@ -41,39 +54,35 @@
           "Value": 1
         }
       ]
-    },
-    {
-      "Id": 3,
-      "Properties": [
-        {
-          "Key": "xPos",
-          "Value": 1
-        },
-        {
-          "Key": "yPos",
-          "Value": 1
-        }
-      ]
     }
   ],
   "Edges": [
     {
       "Initial": {
-        "Id": 0
-      },
-      "Terminal": {
         "Id": 1
       },
-      "Properties": []
+      "Terminal": {
+        "Id": 3
+      },
+      "Properties": null
     },
     {
       "Initial": {
-        "Id": 0
+        "Id": 2
+      },
+      "Terminal": {
+        "Id": 3
+      },
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 3
       },
       "Terminal": {
         "Id": 4
       },
-      "Properties": []
+      "Properties": null
     },
     {
       "Initial": {
@@ -82,7 +91,43 @@
       "Terminal": {
         "Id": 3
       },
-      "Properties": []
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 1
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 2
+      },
+      "Terminal": {
+        "Id": 3
+      },
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 1
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": null
+    },
+    {
+      "Initial": {
+        "Id": 3
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": null
     }
   ]
 }
