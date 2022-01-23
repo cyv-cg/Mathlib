@@ -5,6 +5,8 @@ namespace Mathlib.Graphs
 {
 	public class Edge : PropertyHolder
 	{
+		public const string WEIGHT = "weight";
+
 		public Vertex Initial { get; private set; }
 		public Vertex Terminal { get; private set; }
 
@@ -12,6 +14,11 @@ namespace Mathlib.Graphs
 		{
 			Initial = initial;
 			Terminal = terminal;
+		}
+
+		public string JSON()
+		{
+			return new EdgeSerializationData(this).ToString();
 		}
 
 		protected internal struct EdgeSerializationData

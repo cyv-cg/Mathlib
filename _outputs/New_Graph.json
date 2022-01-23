@@ -1,0 +1,132 @@
+{
+  "Name": "New Graph",
+  "Directed": false,
+  "Weighted": false,
+  "Vertices": [
+    {
+      "Id": 0,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 0
+        },
+        {
+          "Key": "yPos",
+          "Value": 0
+        }
+      ]
+    },
+    {
+      "Id": 1,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 1
+        },
+        {
+          "Key": "yPos",
+          "Value": 0
+        }
+      ]
+    },
+    {
+      "Id": 2,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 2
+        },
+        {
+          "Key": "yPos",
+          "Value": 0.5
+        }
+      ]
+    },
+    {
+      "Id": 3,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 1
+        },
+        {
+          "Key": "yPos",
+          "Value": 1
+        }
+      ]
+    },
+    {
+      "Id": 4,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 0
+        },
+        {
+          "Key": "yPos",
+          "Value": 1
+        }
+      ]
+    },
+    {
+      "Id": 5,
+      "Properties": [
+        {
+          "Key": "xPos",
+          "Value": 0.5
+        },
+        {
+          "Key": "yPos",
+          "Value": 2
+        }
+      ]
+    }
+  ],
+  "Edges": [
+    {
+      "Initial": {
+        "Id": 0
+      },
+      "Terminal": {
+        "Id": 1
+      },
+      "Properties": []
+    },
+    {
+      "Initial": {
+        "Id": 0
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": []
+    },
+    {
+      "Initial": {
+        "Id": 1
+      },
+      "Terminal": {
+        "Id": 3
+      },
+      "Properties": []
+    },
+    {
+      "Initial": {
+        "Id": 1
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": []
+    },
+    {
+      "Initial": {
+        "Id": 3
+      },
+      "Terminal": {
+        "Id": 4
+      },
+      "Properties": []
+    }
+  ]
+}

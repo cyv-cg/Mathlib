@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1180.0" height="1180.0" viewBox="-590.0 -590.0 1180.0 1180.0">
+<defs>
+</defs>
+<rect x="-590.0" y="-590.0" width="1180.0" height="1180.0" fill="#ffffff" />
+<path d="M-400.0,-400.0 L0.0,-400.0" stroke-width="4.0" stroke="#000000" />
+<path d="M-400.0,-400.0 L-400.0,0.0" stroke-width="4.0" stroke="#000000" />
+<path d="M0.0,-400.0 L0.0,0.0" stroke-width="4.0" stroke="#000000" />
+<path d="M0.0,-400.0 L-400.0,0.0" stroke-width="4.0" stroke="#000000" />
+<path d="M0.0,0.0 L-400.0,0.0" stroke-width="4.0" stroke="#000000" />
+<circle cx="-400.0" cy="-400.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="-399.0" y="-405.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">A</text>
+<circle cx="0.0" cy="-400.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="1.0" y="-405.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">B</text>
+<circle cx="400.0" cy="-200.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="401.0" y="-205.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">C</text>
+<circle cx="0.0" cy="0.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="1.0" y="-5.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">D</text>
+<circle cx="-400.0" cy="0.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="-399.0" y="-5.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">E</text>
+<circle cx="-200.0" cy="400.0" r="62" fill="#ffffff" stroke-width="4.0" stroke="#000000" />
+<text x="-199.0" y="395.0" font-size="111.60000000000001" fill="#000000" text-anchor="middle" dy="0.4em">F</text>
+</svg>

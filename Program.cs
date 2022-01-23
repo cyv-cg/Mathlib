@@ -23,24 +23,24 @@ namespace Mathlib
 			// src: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/
 
 			Vertex A = new Vertex(0);
-			A.SetProp("xPos", 0);
-			A.SetProp("yPos", 0);
+			A.SetProp(Vertex.POS_X, 0);
+			A.SetProp(Vertex.POS_Y, 0);
 			Vertex B = new Vertex(1);
-			B.SetProp("xPos", 1);
-			B.SetProp("yPos", 0);
+			B.SetProp(Vertex.POS_X, 1);
+			B.SetProp(Vertex.POS_Y, 0);
 			Vertex C = new Vertex(2);
-			C.SetProp("xPos", 2);
-			C.SetProp("yPos", 0.5);
+			C.SetProp(Vertex.POS_X, 2);
+			C.SetProp(Vertex.POS_Y, 0.5);
 			Vertex D = new Vertex(3);
-			D.SetProp("xPos", 1);
-			D.SetProp("yPos", 1);
+			D.SetProp(Vertex.POS_X, 1);
+			D.SetProp(Vertex.POS_Y, 1);
 			Vertex E = new Vertex(4);
-			E.SetProp("xPos", 0);
-			E.SetProp("yPos", 1);
+			E.SetProp(Vertex.POS_X, 0);
+			E.SetProp(Vertex.POS_Y, 1);
 
 			Vertex F = new Vertex(5);
-			F.SetProp("xPos", 0.5);
-			F.SetProp("yPos", 2);
+			F.SetProp(Vertex.POS_X, 0.5);
+			F.SetProp(Vertex.POS_Y, 2);
 
 			Vertex[] vertices = new Vertex[] { 
 				A, 
@@ -52,30 +52,30 @@ namespace Mathlib
 			};
 
 			Edge AB = new Edge(A, B);
-			AB.SetProp("weight", 4);
+			//AB.SetProp(Edge.WEIGHT, 4.0);
 			Edge AE = new Edge(A, E);
-			AE.SetProp("weight", 3);
+			//AE.SetProp(Edge.WEIGHT, 3.0);
 			Edge BC = new Edge(B, C);
-			BC.SetProp("weight", 6);
+			//BC.SetProp(Edge.WEIGHT, 6.0);
 			Edge BD = new Edge(B, D);
-			BD.SetProp("weight", 4);
+			//BD.SetProp(Edge.WEIGHT, 4.0);
 			Edge BE = new Edge(B, E);
-			BE.SetProp("weight", 8);
+			//BE.SetProp(Edge.WEIGHT, 8.0);
 			Edge CD = new Edge(C, D);
-			CD.SetProp("weight", 2);
+			//CD.SetProp(Edge.WEIGHT, 2.0);
 			Edge DE = new Edge(D, E);
-			DE.SetProp("weight", 2);
+			//DE.SetProp(Edge.WEIGHT, 2.0);
 
 			// This is to test when multiple edges connect 2 vertices.
 			Edge EB = new Edge(E, B);
-			EB.SetProp("weight", 4);
+			//EB.SetProp(Edge.WEIGHT, 4.0);
 
 			Edge CF = new Edge(C, F);
-			CF.SetProp("weight", 2);
+			//CF.SetProp(Edge.WEIGHT, 2.0);
 			Edge DF = new Edge(D, F);
-			DF.SetProp("weight", 7);
+			//DF.SetProp(Edge.WEIGHT, 7.0);
 			Edge EF = new Edge(E, F);
-			EF.SetProp("weight", 343);
+			//EF.SetProp(Edge.WEIGHT, 343.0);
 
 			Edge[] edges = new Edge[] {
 				AB,
@@ -91,21 +91,27 @@ namespace Mathlib
 				//EF
 			};
 
-			//Graph G = new Graph(vertices, edges, false, "New Graph");
-			Graph G = Graph.CreateWheelGraph(10);
+			Graph G = new Graph(vertices, edges, "New Graph", false);
 			Console.WriteLine(G);
-			G.Save(Commands.RootFolder, new string[] { "xPos", "yPos" }, new string[] { "weight" });
+			G.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
+
+			//Graph wheelGraph = Graph.CreateWheelGraph(10);
+			//wheelGraph.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y });
 
 			// Display the Harmonic Centrality and Closeness of every vertex in G.
-			foreach (Vertex v in G.Vertices)
-			{
-				Console.WriteLine();
-				Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
-				Console.WriteLine($"Closeness of {v}: {G.Closeness(v)}");
-			}
+			//foreach (Vertex v in G.Vertices)
+			//{
+			//	Console.WriteLine();
+			//	Console.WriteLine($"Harmonic Centrality about {v}: {G.HarmonicCentrality(v)}");
+			//	Console.WriteLine($"Closeness of {v}: {G.Closeness(v)}");
+			//}
 
 			Console.WriteLine();
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} {G.Name.Replace(' ', '_')}.json {true} {!G.Directed} false");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{G.Name.Replace(' ', '_')}.json {true} {false} {false}");
+
+			Graph BFS = G.BreadthFirstSearch(A);
+			BFS.Save(Commands.RootFolder + "/_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{BFS.Name.Replace(' ', '_')}.json {true} {false} {false}");
 		}
 	}
 }

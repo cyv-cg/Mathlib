@@ -7,19 +7,23 @@ namespace Mathlib.Graphs
 {
 	public class Graph
 	{
+		#region Properties
 		public string Name { get; private set; }
 
 		public bool Directed { get; private set; }
+		public bool Weighted { get; private set; }
 
 		public List<Vertex> Vertices { get; private set; }
 		public List<Edge> Edges { get; private set; }
 
 		public Dictionary<Vertex, List<Vertex>> AdjList { get; private set; }
-		
-		public Graph(Vertex[] vertices, Edge[] edges, bool directed = false, string name = "New Graph")
+		#endregion
+		#region Construction
+		public Graph(Vertex[] vertices, Edge[] edges, string name = "New Graph", bool directed = false, bool weighted = false)
 		{
 			Name = name;
 			Directed = directed;
+			Weighted = weighted;
 
 			Vertices = new List<Vertex>();
 			Edges = new List<Edge>();
@@ -31,28 +35,39 @@ namespace Mathlib.Graphs
 				AddEdge(e);
 		}
 
+		/// <summary>
+		/// Create a graph with one vertex at the center, connected to a specified number of other vertices.
+		/// </summary>
+		/// <param name="spokes">Number of surrounding vertices.</param>
+		/// <returns></returns>
 		public static Graph CreateWheelGraph(int spokes, bool directed = false, string name = "New Wheel Graph")
 		{
+			// Initialize the vertex array with extra length to account for the center vertex.
 			Vertex[] verts = new Vertex[spokes + 1];
 			Edge[] edges = new Edge[spokes];
 
+			// Create the center vertex.
 			verts[0] = new Vertex(0);
-			verts[0].SetProp("xPos", 0.0);
-			verts[0].SetProp("yPos", 0.0);
+			// This vertex is at the geometric origin, (0, 0).
+			verts[0].SetProp(Vertex.POS_X, 0.0);
+			verts[0].SetProp(Vertex.POS_Y, 0.0);
 
+			// Start the loop with i=1 since the 0th vertex has already been created.
 			for (int i = 1; i < verts.Length; i++)
 			{
+				// Create a new vertex.
 				verts[i] = new Vertex(i);
-
+				// The new vertex is placed along a circle around the center vertex.
+				// As new vertices are created, they are placed at an angle starting at 0 up to just under 2*pi.
 				double angle = 2 * Math.PI * ((double)(i - 1) / spokes);
-				verts[i].SetProp("xPos", Math.Cos(angle));
-				verts[i].SetProp("yPos", -Math.Sin(angle));
-
+				verts[i].SetProp(Vertex.POS_X, Math.Cos(angle));
+				verts[i].SetProp(Vertex.POS_Y, -Math.Sin(angle));
+				// Create an edge from the center vertex to the new vertex.
+				// The subscript offset is because the vertex array is 1 ahead of the edge array.
 				edges[i - 1] = new Edge(verts[0], verts[i]);
-				edges[i - 1].SetProp("weight", new Random().Next(1, 16));
 			}
-
-			return new Graph(verts, edges, directed, name);
+			// Once these properties are set, it is as simple as creating any other graph.
+			return new Graph(verts, edges, name, directed);
 		}
 
 		public void AddVertex(Vertex v)
@@ -67,7 +82,9 @@ namespace Mathlib.Graphs
 				AdjList[e.Terminal].Add(e.Initial);
 			Edges.Add(e);
 		}
+		#endregion
 
+		#region Accessors
 		public Vertex[] Neighbors(Vertex v)
 		{
 			return AdjList[v].ToArray();
@@ -86,6 +103,7 @@ namespace Mathlib.Graphs
 			}
 			return null;
 		}
+		#endregion
 
 		// Single-source shortest path finding via Dijkstra's Algorithm.
 		// src: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
@@ -100,15 +118,17 @@ namespace Mathlib.Graphs
 			// Initialize properties for each vertex in the graph.
 			foreach (Vertex v in Vertices)
 			{
-				// Technically, the distance should be initialized to infinity.
-				v.SetProp("distance", int.MaxValue);
+				// For principle, set the distance as high as it can get.
+				v.SetProp("distance", double.MaxValue);
+				// Explicitly mark the distance as infinite.
 				v.SetProp("isInfiniteDistance", true);
 				v.SetProp<Vertex>("predecessor", null);
 				// Add every vertex to the list under consideration.
 				Q.Add(v);
 			}
 			// Set the distance from the source to the source (that's zero).
-			source.SetProp("distance", 0);
+			source.SetProp("distance", 0.0);
+			// 0 is a finite number.
 			source.SetProp("isInfiniteDistance", false);
 
 			// Loop as long as there are still vertices to visit.
@@ -116,7 +136,7 @@ namespace Mathlib.Graphs
 			{
 				// Find which remaining vertex has the shortest distance from the source.
 				// These will probably be vertices indicent to one already visited.
-				Vertex u = PropertyHolder.ItemWithMinProp<int, Vertex>(Q.ToArray(), "distance");
+				Vertex u = PropertyHolder.ItemWithMinProp<double, Vertex>(Q.ToArray(), "distance");
 				// Remove that vertex from consideration.
 				Q.Remove(u);
 
@@ -147,13 +167,15 @@ namespace Mathlib.Graphs
 					{
 						// Compute the distance to this vertex.
 						// This is done by getting the distance to its predecessor and adding the weight of the edge connecting them.
-						int weight = 1;
-						if (GetEdge(u, v).HasProp("weight"))
-							weight = GetEdge(u, v).GetProp<int>("weight");
-						int alt = u.GetProp<int>("distance") + weight;
+						double weight = 1;
+						// Use edge weight ONLY IF this is a weighted graph.
+						// Otherwise, treat the weight as 1.
+						if (Weighted && GetEdge(u, v).HasProp(Edge.WEIGHT))
+							weight = GetEdge(u, v).GetProp<double>(Edge.WEIGHT);
+						double alt = u.GetProp<double>("distance") + weight;
 						// If the newly computed distance is less than the existing distance, then a shorter path there has been discovered.
 						// Thus we update its properties accordingly.
-						if (alt < v.GetProp<int>("distance"))
+						if (alt < v.GetProp<double>("distance") || v.GetProp<bool>("isInfiniteDistance"))
 						{
 							// Update its distance and predecessor.
 							v.SetProp("distance", alt);
@@ -169,6 +191,91 @@ namespace Mathlib.Graphs
 			return null;
 		}
 
+		public Graph BreadthFirstSearch(Vertex source)
+		{
+			// Create a list to store the every vertex that gets fully processed.
+			List<Vertex> tree = new List<Vertex>();
+
+			// Initialize a new queue of vertices.
+			Queue<Vertex> Q = new Queue<Vertex>();
+			// Initialize properties for each vertex in the graph.
+			foreach (Vertex v in Vertices)
+			{
+				// Default every vertex to be undiscovered.
+				v.SetProp("state", "undiscovered");
+				// For principle, set the distance as high as it can get.
+				v.SetProp("distance", double.MaxValue);
+				// Explicitly mark the distance as infinite.
+				v.SetProp("isInfiniteDistance", true);
+				v.SetProp<Vertex>("predecessor", null);
+			}
+			// Since we start at the source, it is discovered.
+			source.SetProp("state", "discovered");
+			// Set the distance from the source to the source (that's zero).
+			source.SetProp("distance", 0.0);
+			// 0 is a finite number.
+			source.SetProp("isInfiniteDistance", false);
+			// Add only the source vertex to the queue.
+			Q.Enqueue(source);
+
+			while (Q.Count > 0)
+			{
+				Vertex u = Q.Dequeue();
+				foreach (Vertex v in Neighbors(u))
+				{
+					// Only check vertices that have not been discovered yet.
+					if (v.GetProp<string>("state") == "undiscovered")
+					{
+						// Mark this vertex as discovered.
+						v.SetProp("state", "discovered");
+
+						// Compute the distance to this vertex.
+						// This is done by getting the distance to its predecessor and adding the weight of the edge connecting them.
+						double weight = 1;
+						// Use edge weight ONLY IF this is a weighted graph.
+						// Otherwise, treat the weight as 1.
+						Edge e = GetEdge(u, v);
+						if (Weighted && e.HasProp(Edge.WEIGHT))
+							weight = e.GetProp<double>(Edge.WEIGHT);
+						double alt = u.GetProp<double>("distance") + weight;
+						// Set the distance of this vertex from the source.
+						v.SetProp("distance", alt);
+
+						// Keep track of this vertex's predecessor.
+						v.SetProp("predecessor", u);
+						// Add this vertex to the queue so its neighbors can be checked later.
+						Q.Enqueue(v);
+					}
+				}
+				// Once all of u's neighbors have been discovered, it has been fully processed.
+				u.SetProp("state", "processed");
+				// Add the processed vertex to the list.
+				tree.Add(u);
+			}
+
+			// Create a new list of edges.
+			// This will store every edge that is part of the BFS tree.
+			List<Edge> edges = new List<Edge>();
+
+			foreach (Vertex v in tree)
+			{
+				// Ignore any vertex that doesn't have a predecessor. (the source vertex)
+				// The predecessor of the source is null, so this check is necessary.
+				if (v.GetProp<Vertex>("predecessor") == null)
+					continue;
+				
+				// Find the edge that connects v and its predecessor.
+				// This *should* be unique, since a vertex can't have more than one predecessor.
+				Edge e = GetEdge(v.GetProp<Vertex>("predecessor"), v);
+				edges.Add(e);
+			}
+
+			// Return a new graph with the discovered vertices and edges.
+			// This is the BFS tree staring at the source vertex.
+			return new Graph(tree.ToArray(), edges.ToArray(), $"BFS Tree of {Name} from {source}", Directed, Weighted);
+		}
+
+		#region Centrality measures
 		// Harmonic Centrality of a vertex v.
 		// Eq. 3.2 on page 230 of "Axioms for Centrality" (Boldi & Vigna)
 		public double HarmonicCentrality(Vertex v)
@@ -183,20 +290,13 @@ namespace Mathlib.Graphs
 
 				// Find the shortest path from u to v. The total length of the path is stored in the v's "distance" property.
 				FindPath(u, v);
-				// If the distance from start (u) to finish (v) is less than zero, that means integer overflow has occured.
-				// This is because vertices that are disconnected from the rest of the graph have a distance of int.MaxValue.
-				// Once the distance from the rest of the path is added to that, it overflows into the negatives.
-				// Hence, if the calculated path distance is negative, the actual distance is infinity, so we do not consider it.
-				// Of course, this assumes all edges have a nonneegative weight and may potentially not be true with multiple
-				// nodes with int.MaxValue distance.
-				if (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0
-					// Alternatively, if the distance is explicitly stated as infinite.
-					|| v.GetProp<bool>("isInfiniteDistance"))
+				// Ignore if the distance is explicitly stated as infinite.
+				if (v.GetProp<bool>("isInfiniteDistance"))
 					continue;
 
 				// v's "distance" property is the length of the shortest path between u and v.
 				// Add the reciprocal of the distance to the centrality measure.
-				centrality += 1d / v.GetProp<int>("distance");
+				centrality += 1d / v.GetProp<double>("distance");
 			}
 
 			return centrality;
@@ -215,15 +315,17 @@ namespace Mathlib.Graphs
 
 				FindPath(u, v);
 				// Only disregard infinite distances if we are using the "patched" version of the Closeness equation.
-				if (patched && (v.GetProp<int>("distance") == int.MaxValue || v.GetProp<int>("distance") < 0))
+				if (patched && v.GetProp<bool>("isInfiniteDistance"))
 					continue;
 
-				centrality += v.GetProp<int>("distance");
+				centrality += v.GetProp<double>("distance");
 			}
 
 			return 1d / centrality;
 		}
+		#endregion
 
+		#region String manipulation
 		public override string ToString()
 		{
 			// Initialize the string as just the name of the graph.
@@ -242,8 +344,8 @@ namespace Mathlib.Graphs
 					// Find the edge connecting these vertices.
 					Edge RC = GetEdge(Vertices[r], adjacency[c]);
 					// If the edge has a weight, print it as well.
-					if (RC.HasProp("weight"))
-						graph += $"({RC.GetProp<int>("weight")})";
+					if (Weighted && RC.HasProp(Edge.WEIGHT))
+						graph += $"({RC.GetProp<double>(Edge.WEIGHT)})";
 					// Separate with a comma if this is not the last value.
 					if (c < adjacency.Length - 1)
 						graph += ", ";
@@ -284,6 +386,7 @@ namespace Mathlib.Graphs
 			public string Name { get; private set; }
 
 			public bool Directed { get; private set; }
+			public bool Weighted { get; private set; }
 
 			public List<Vertex.VertexSerializationData> Vertices { get; private set; }
 			public List<Edge.EdgeSerializationData> Edges { get; private set; }
@@ -292,6 +395,7 @@ namespace Mathlib.Graphs
 			{
 				Name = G.Name;
 				Directed = G.Directed;
+				Weighted = G.Weighted;
 
 				Vertices = new List<Vertex.VertexSerializationData>();
 				Edges = new List<Edge.EdgeSerializationData>();
@@ -307,5 +411,6 @@ namespace Mathlib.Graphs
 				return JsonSerializer.Serialize(this);
 			}
 		}
+		#endregion
 	}
 }

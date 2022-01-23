@@ -5,6 +5,10 @@ namespace Mathlib.Graphs
 {
 	public class Vertex : PropertyHolder
 	{
+		public const string POS_X = "xPos";
+		public const string POS_Y = "yPos";
+
+
 		public int Id { get; private set; }
 
 		public Vertex(int id)
@@ -46,7 +50,7 @@ namespace Mathlib.Graphs
 
 		public string JSON()
 		{
-			return JsonSerializer.Serialize(this);
+			return new VertexSerializationData(this).ToString();
 		}
 
 		protected internal struct VertexSerializationData
