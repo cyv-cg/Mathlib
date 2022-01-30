@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace Mathlib.System
+namespace Mathlib.Sys
 {
 	public static class Commands
 	{

@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.Collections.Generic;
+using System;
+using Mathlib.MathG;
 
 namespace Mathlib.Graphs
 {
@@ -8,12 +10,27 @@ namespace Mathlib.Graphs
 		public const string POS_X = "xPos";
 		public const string POS_Y = "yPos";
 
-
 		public int Id { get; private set; }
+
+		public Vector2 Position { get 
+			{
+				if (!HasProp(POS_X))
+					throw new Exception($"Vetex '{Id}' has no 'x' position.");
+				if (!HasProp(POS_Y))
+					throw new Exception($"Vertex '{Id}' has no 'y' position.");
+
+				return new Vector2(GetProp<double>(POS_X), GetProp<double>(POS_Y)); 
+			} 
+		}
 
 		public Vertex(int id)
 		{
 			Id = id;
+		}
+
+		public void ChangeId(int newId)
+		{
+			Id = newId;
 		}
 
 		// Convert the numerical ID to alpha characters.
@@ -53,7 +70,7 @@ namespace Mathlib.Graphs
 			return new VertexSerializationData(this).ToString();
 		}
 
-		protected internal struct VertexSerializationData
+		internal struct VertexSerializationData
 		{
 			public int Id { get; private set; }
 

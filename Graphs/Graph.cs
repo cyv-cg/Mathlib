@@ -10,19 +10,29 @@ namespace Mathlib.Graphs
 	public class Graph
 	{
 		#region Properties
-		public string Name { get; private set; }
+		public string Name { get; protected set; }
 
-		public bool Directed { get; private set; }
-		public bool Weighted { get; private set; }
+		public bool Directed { get; protected set; }
+		public bool Weighted { get; protected set; }
 
 		public List<Vertex> Vertices { get; private set; }
 		public List<Edge> Edges { get; private set; }
 
-		public Dictionary<Vertex, List<Vertex>> AdjList { get; private set; }
+		public Dictionary<Vertex, List<Vertex>> AdjList { get; protected set; }
 
 		private string fileName;
 		#endregion
 		#region Construction
+		public Graph() 
+		{
+			Name = "New Graph";
+			Vertices = new List<Vertex>();
+			Edges = new List<Edge>();
+			AdjList = new Dictionary<Vertex, List<Vertex>>();
+			Directed = false;
+			Weighted = false;
+		}
+
 		public Graph(Vertex[] vertices, Edge[] edges, string name = "New Graph", bool directed = false, bool weighted = false)
 		{
 			Name = name;
@@ -85,7 +95,7 @@ namespace Mathlib.Graphs
 			return Neighbors(v).Length;
 		}
 
-		private Edge GetEdge(Vertex initial, Vertex terminal)
+		protected Edge GetEdge(Vertex initial, Vertex terminal)
 		{
 			foreach (Edge e in Edges)
 			{
@@ -99,7 +109,16 @@ namespace Mathlib.Graphs
 		public void AddVertex(Vertex v)
 		{
 			if (AdjList.ContainsKey(v))
+			{
 				throw new ArgumentException($"{Name} already contains vertex with ID '{v.Id}.'");
+				//int maxIndex = -1;
+				//foreach (Vertex u in Vertices)
+				//{
+				//	if (u.Id > maxIndex)
+				//		maxIndex = u.Id;
+				//}
+				//v.ChangeId(maxIndex + 1);
+			}
 			if (v == null)
 				throw new ArgumentNullException($"Vertex cannot be null.");
 
@@ -514,7 +533,7 @@ namespace Mathlib.Graphs
 			}
 		}
 
-		private struct GraphSerializationData
+		internal struct GraphSerializationData
 		{
 			public string Name { get; private set; }
 
@@ -533,7 +552,7 @@ namespace Mathlib.Graphs
 				Vertices = new List<Vertex.VertexSerializationData>();
 				Edges = new List<Edge.EdgeSerializationData>();
 
-				if (!Weighted)
+				if (!Weighted && edgeProps != null)
 					edgeProps = edgeProps.Difference(new string[] { Edge.WEIGHT });
 
 				foreach (Vertex v in G.Vertices)

@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.Collections.Generic;
+using System;
+using Mathlib.MathG;
 
 namespace Mathlib.Graphs
 {
@@ -9,6 +11,12 @@ namespace Mathlib.Graphs
 
 		public Vertex Initial { get; private set; }
 		public Vertex Terminal { get; private set; }
+
+		public double Length { get
+			{
+				return (Initial.Position - Terminal.Position).Magnitude;
+			}
+		}
 
 		public Edge(Vertex initial, Vertex terminal)
 		{
@@ -21,17 +29,17 @@ namespace Mathlib.Graphs
 			return new EdgeSerializationData(this).ToString();
 		}
 
-		protected internal struct EdgeSerializationData
+		internal struct EdgeSerializationData
 		{
-			public Vertex Initial { get; private set; }
-			public Vertex Terminal { get; private set; }
+			public Vertex.VertexSerializationData Initial { get; private set; }
+			public Vertex.VertexSerializationData Terminal { get; private set; }
 
 			public List<KeyValuePair<string,object>> Properties { get; private set; }
 
 			public EdgeSerializationData(Edge e, params string[] properties)
 			{
-				Initial = e.Initial;
-				Terminal = e.Terminal;
+				Initial = new Vertex.VertexSerializationData(e.Initial);
+				Terminal = new Vertex.VertexSerializationData(e.Terminal);
 
 				if (properties != null && properties.Length > 0)
 				{

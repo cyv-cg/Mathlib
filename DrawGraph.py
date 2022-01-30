@@ -207,7 +207,7 @@ try:
 		# Draw a circle centered at that origin with radius as calculated above.
 		d.append(draw.Circle(origin[0], -origin[1], radius, fill='#ffffff', stroke_width=element_thickness, stroke='#000000'))
 		# Write the id/name of the node in the center of the circle.
-		d.append(draw.Text(text, 1.8 * radius, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
+		d.append(draw.Text(text, (1.8 * radius) / len(text), origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
 
 	# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
 	file_name = data['Name'].replace(" ", "_")
