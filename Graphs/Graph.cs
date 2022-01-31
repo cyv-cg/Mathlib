@@ -4,6 +4,9 @@ using System.IO;
 using System;
 
 using Mathlib.Arrays;
+using Mathlib.Graphs.Shapes;
+using Mathlib.MathG;
+using Mathlib.Sys;
 
 namespace Mathlib.Graphs
 {
@@ -83,6 +86,48 @@ namespace Mathlib.Graphs
 			// Once these properties are set, it is as simple as creating any other graph.
 			return new Graph(verts, edges, name, directed);
 		}
+
+		public static Graph Union(params Graph[] graphs)
+		{
+			Vertex[] verts = new Vertex[0];
+			Edge[] edges = new Edge[0];
+			int numVerts = 0;
+
+			foreach (Graph G in graphs)
+			{
+				foreach (Vertex v in G.Vertices)
+					v.ChangeId(v.Id + numVerts);
+				numVerts += G.Vertices.Count;
+				verts = verts.Union(G.Vertices.ToArray());
+				edges = edges.Union(G.Edges.ToArray());
+			}
+			return new Graph(verts, edges);
+		}
+
+		public static Graph Grid(Graph G)
+		{
+			Vertex leftmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
+			Vertex rightmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
+			Vertex downmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
+			Vertex upmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
+
+			Vertex A = new Vertex(0);
+			Vertex B = new Vertex(1);
+			Vertex C = new Vertex(2);
+			Vertex D = new Vertex(3);
+
+			A.SetProp(Vertex.POS_X, Math.Min(leftmost.Position.X, 0));
+			A.SetProp<double>(Vertex.POS_Y, 0);
+			B.SetProp(Vertex.POS_X, Math.Max(rightmost.Position.X, 0));
+			B.SetProp<double>(Vertex.POS_Y, 0);
+
+			C.SetProp<double>(Vertex.POS_X, 0);
+			C.SetProp(Vertex.POS_Y, Math.Min(downmost.Position.Y, 0));
+			D.SetProp<double>(Vertex.POS_X, 0);
+			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.Y, 0));
+
+			return new Graph(new Vertex[] {A,B,C,D}, new Edge[] {new Edge(A, B), new Edge(C,D)}, "Grid", false, false);
+		}
 		#endregion
 
 		#region Accessors
@@ -127,6 +172,9 @@ namespace Mathlib.Graphs
 		}
 		public void AddEdge(Edge e)
 		{
+			if (GetEdge(e.Initial, e.Terminal) != null)
+				return;
+
 			if (e == null)
 				throw new ArgumentNullException($"Edge cannot be null.");
 
@@ -134,6 +182,36 @@ namespace Mathlib.Graphs
 			if (!Directed)
 				AdjList[e.Terminal].Add(e.Initial);
 			Edges.Add(e);
+		}
+
+		public void RemoveVertex(Vertex v)
+		{
+			if (v == null)
+				throw new ArgumentNullException($"Vertex cannot be null.");
+
+			if (Vertices.Contains(v))
+			{
+				for (int i = Edges.Count - 1; i >= 0; i--)
+				{
+					if (Edges[i].Initial == v || Edges[i].Terminal == v)
+						RemoveEdge(Edges[i]);
+				}
+				AdjList.Remove(v);
+				Vertices.Remove(v);
+			}
+		}
+		public void RemoveEdge(Edge e)
+		{
+			if (e == null)
+				throw new ArgumentNullException($"Edge cannot be null.");
+
+			if (Edges.Contains(e))
+			{
+				AdjList[e.Initial].Remove(e.Terminal);
+				if (!Directed)
+					AdjList[e.Terminal].Remove(e.Initial);
+				Edges.Remove(e);
+			}
 		}
 
 		public void Rename(string name)
@@ -210,6 +288,110 @@ namespace Mathlib.Graphs
 			}
 
 			return new Graph(vertices.ToArray(), edges.ToArray(), $"Subgraph of {Name} at {source} with radius {radius}", Directed, Weighted);
+		}
+
+		// Create a Delaunay Triangulation of the graph using the Bowyer-Watson algorithm.
+		// https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
+		public Graph Triangulate()
+		{
+			List<Triangle> tris = new List<Triangle>();
+
+			double x_max = int.MinValue;
+			double x_min = int.MaxValue;
+			double y_max = int.MinValue;
+			double y_min = int.MaxValue;
+			// Find the extreme points of the bounds.
+			foreach (Vertex v in Vertices)
+			{
+				if (v.Position.X < x_min)
+					x_min = v.Position.X;
+				if (v.Position.X > x_max)
+					x_max = v.Position.X;
+
+				if (v.Position.Y < y_min)
+					y_min = v.Position.Y;
+				if (v.Position.Y > y_max)
+					y_max = v.Position.Y;
+			}
+
+			// Add some buffer to the extreme coordinates so they are slightly separated from the points.
+			x_max += 1;
+			x_min -= 1;
+			y_max += 1;
+			y_min -= 1;
+
+			// Square bounds covering all points.
+			Square squareBounds = new Square(0.5 * new Vector2(x_min + x_max, y_min + y_max), Math.Max(Math.Abs(x_max - x_min), Math.Abs(y_max - y_min)));
+			// Use that square to create a triangle that also covers all points.
+			Triangle superTriangle = Triangle.Circumscribe(squareBounds);
+			superTriangle.Rename("Super Triangle");
+			// Add the super triangle to the list of triangles.
+			tris.Add(superTriangle);
+
+			// Create a new graph that will store the triangulation.
+			Graph triangulation = Union(this, superTriangle);
+			triangulation.Rename("Triangulation");
+
+			// Add all points one at a time to the triangulation.
+			for (int i = 0; i < Vertices.Count; i++)
+			{
+				if (Vertices.Count > 64)
+					Console.WriteLine($"Triangulating... {i + 1}/{Vertices.Count}");
+				
+				List<Triangle> badTriangles = new List<Triangle>();
+				// First find all the triangles that are no longer valid due to the insertion.
+				foreach (Triangle t in tris)
+				{
+					Circle circumcircle = Circle.Circumscribe(t);
+					if (circumcircle.ContainsPoint(Vertices[i]))
+						badTriangles.Add(t);
+				}
+				List<Edge> polygon = new List<Edge>();
+				// Find the boundary of the polygonal hole.
+				foreach (Triangle t in badTriangles)
+				{
+					foreach (Edge e in t.Edges)
+					{
+						bool isShared = false;
+						foreach (Triangle s in badTriangles)
+						{
+							if (s == t)
+								continue;
+							// Find all edges that are shared between 2 or more bad triangles.
+							foreach (Edge f in s.Edges)
+							{
+								if ((f.Initial == e.Initial && f.Terminal == e.Terminal) || (f.Terminal == e.Initial && f.Initial == e.Terminal))
+								{
+									isShared = true;
+									break;
+								}
+							}
+						}
+						if (!isShared)
+							polygon.Add(e);
+					}
+				}
+				// Remove them from the graph.
+				foreach (Triangle t in badTriangles)
+					tris.Remove(t);
+				// The polygon stores edges that are sill valid to use, so put them back.
+				foreach (Edge e in polygon)
+				{
+					Triangle newTri = new Triangle(e.Initial, e.Terminal, Vertices[i]);
+					tris.Add(newTri);
+				}
+			}
+			// Add every edge from the valid triangles to the triangulation.
+			foreach (Triangle t in tris)
+			{
+				foreach (Edge e in t.Edges)
+					triangulation.AddEdge(e);
+			}
+			// Done inserting, now clean up.
+			foreach (Vertex v in superTriangle.Vertices)
+				triangulation.RemoveVertex(v);
+
+			return triangulation;
 		}
 
 		#region Pathfinding
@@ -435,6 +617,7 @@ namespace Mathlib.Graphs
 				}
 			}
 
+			v.SetProp("harmonicCentrality", centrality);
 			return centrality;
 		}
 
@@ -531,6 +714,12 @@ namespace Mathlib.Graphs
 			{
 				File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
 			}
+		}
+
+		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
+		{
+			Save(Commands.RootFolder + folder, vertProps, edgeProps);
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.json {folder} true");
 		}
 
 		internal struct GraphSerializationData

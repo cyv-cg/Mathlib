@@ -50,5 +50,23 @@ namespace Mathlib
 				return null;
 			}
 		}
+		public static TItem ItemWithMaxProp<TValue, TItem>(TItem[] items, string property) where TValue : IComparable where TItem : PropertyHolder
+		{
+			try
+			{
+				TItem itemWithMaxVal = items[0];
+				for (int i = 1; i < items.Length; i++)
+				{
+					if (items[i].GetProp<TValue>(property).CompareTo(itemWithMaxVal.GetProp<TValue>(property)) > 0)
+						itemWithMaxVal = items[i];
+				}
+				return itemWithMaxVal;
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e.Message);
+				return null;
+			}
+		}
 	}
 }

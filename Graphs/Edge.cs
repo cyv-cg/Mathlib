@@ -12,6 +12,15 @@ namespace Mathlib.Graphs
 		public Vertex Initial { get; private set; }
 		public Vertex Terminal { get; private set; }
 
+		public double Slope { get
+			{
+				Vector2 s = Initial.Position;
+				Vector2 e = Terminal.Position;
+
+				return (e.Y - s.Y) / (e.X - s.X);
+			}
+		}
+
 		public double Length { get
 			{
 				return (Initial.Position - Terminal.Position).Magnitude;
@@ -29,17 +38,22 @@ namespace Mathlib.Graphs
 			return new EdgeSerializationData(this).ToString();
 		}
 
+		public override string ToString()
+		{
+			return $"{Initial} -> {Terminal}";
+		}
+
 		internal struct EdgeSerializationData
 		{
-			public Vertex.VertexSerializationData Initial { get; private set; }
-			public Vertex.VertexSerializationData Terminal { get; private set; }
+			public int Initial { get; private set; }
+			public int Terminal { get; private set; }
 
 			public List<KeyValuePair<string,object>> Properties { get; private set; }
 
 			public EdgeSerializationData(Edge e, params string[] properties)
 			{
-				Initial = new Vertex.VertexSerializationData(e.Initial);
-				Terminal = new Vertex.VertexSerializationData(e.Terminal);
+				Initial = e.Initial.Id;
+				Terminal = e.Terminal.Id;
 
 				if (properties != null && properties.Length > 0)
 				{

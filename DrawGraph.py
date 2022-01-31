@@ -15,8 +15,8 @@ import Python_Scripts.id_to_alpha as id
 import Python_Scripts.get_prop as prop
 
 def normalize_positions():
-	min_x = 0
-	min_y = 0
+	min_x = 99999
+	min_y = 99999
 	# Find the minimum coordinates.
 	for v in vertices:
 		if v['Properties'][0]['Value'] < min_x:
@@ -29,10 +29,10 @@ def normalize_positions():
 		v['Properties'][1]['Value'] = v['Properties'][1]['Value'] - min_y
 
 def get_plot_size(vertices, radius, padding, scale):
-	leftmost = 0
-	rightmost = 0
-	upmost = 0
-	downmost = 0
+	leftmost = 99999
+	rightmost = -99999
+	upmost = 99999
+	downmost = -99999
 
 	# Calculate the center point of each node, as specified in its properties
 	positions = {}
@@ -139,8 +139,8 @@ try:
 	# Draw the edges and weights, if applicable.
 	for i in range(len(edges)):
 		# Extract the initial and terminal nodes this edge connects to.
-		initial = int(edges[i]['Initial']['Id'])
-		terminal = int(edges[i]['Terminal']['Id'])
+		initial = int(edges[i]['Initial'])
+		terminal = int(edges[i]['Terminal'])
 
 		# Cache coordinates of each node.
 		# Half the plot size is subtracted so the math is centered around the top-left corner instead of the middle of the image.
@@ -216,4 +216,4 @@ try:
 	# Save the image to the specified file types.
 	save_file(folder + file_name, d, save_as_svg, save_as_png, save_as_pdf)
 except Exception as e:
-	print(e)
+	print("DrawGraph.py:" + str(e))

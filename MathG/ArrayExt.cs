@@ -54,15 +54,24 @@ namespace Mathlib.Arrays
 			if (A == null || B == null)
 				throw new NullReferenceException();
 
-			int length = A.Length + B.Length;
-			T[] c = new T[length];
-
+			List<T> c = new List<T>();
 			for (int x = 0; x < A.Length; x++)
-				c[x] = A[x];
+				c.Add(A[x]);
 			for (int y = 0; y < B.Length; y++)
-				c[y + A.Length] = B[y];
+			{
+				if (!c.Contains(B[y]))
+					c.Add(B[y]);
+			}
 
-			return c;
+			//int length = A.Length + B.Length;
+			//T[] c = new T[length];
+
+			//for (int x = 0; x < A.Length; x++)
+			//	c[x] = A[x];
+			//for (int y = 0; y < B.Length; y++)
+			//	c[y + A.Length] = B[y];
+
+			return c.ToArray();
 		}
 		/// <summary>
 		/// Returns every element in A that is also in B.
@@ -80,9 +89,6 @@ namespace Mathlib.Arrays
 			for (int i = 0; i < smaller.Length; i++)
 				if (A.Contains(smaller[i]) && B.Contains(smaller[i]))
 					c.Add(smaller[i]);
-
-			if (c.Count == 0)
-				c = null;
 
 			return c.ToArray();
 		}

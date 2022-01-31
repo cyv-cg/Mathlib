@@ -13,10 +13,8 @@ namespace Mathlib.Graphs.Shapes
 
 		public readonly Vector2 center;
 
-		public Circle(int vertices, double radius, double center_x = 0, double center_y = 0)
+		public Circle(int vertices, double radius, Vector2 center)
 		{
-			center = new Vector2(center_x, center_y);
-
 			// Initialize the vertex array.
 			Vertex[] verts = new Vertex[vertices];
 			Edge[] edges = new Edge[vertices];
@@ -29,8 +27,8 @@ namespace Mathlib.Graphs.Shapes
 				// The new vertex is placed along a circle around the center vertex.
 				// As new vertices are created, they are placed at an angle starting at 0 up to just under 2*pi.
 				double angle = 2 * Math.PI * ((double)(i - 1) / vertices);
-				verts[i].SetProp(Vertex.POS_X, center_x + radius * Math.Cos(angle));
-				verts[i].SetProp(Vertex.POS_Y, center_y - radius * Math.Sin(angle));
+				verts[i].SetProp(Vertex.POS_X, center.X + radius * Math.Cos(angle));
+				verts[i].SetProp(Vertex.POS_Y, center.Y - radius * Math.Sin(angle));
 
 				if (i > 0)
 				{
@@ -46,11 +44,28 @@ namespace Mathlib.Graphs.Shapes
 			Weighted = false;
 
 			Radius = radius;
+			this.center = center;
 
 			foreach (Vertex v in verts)
 				AddVertex(v);
 			foreach (Edge e in edges)
 				AddEdge(e);
+		}
+
+		public static Circle Circumscribe(Triangle t, int vertices = 16)
+		{
+			Vector2 E = t.Vertices[0].Position;
+			Vector2 center = t.Center();
+			//Console.WriteLine($"tri center: {center}");
+
+			double radius = Math.Sqrt( Math.Pow(E.X - center.X, 2) + Math.Pow(E.Y - center.Y, 2) );
+
+			return new Circle(vertices, radius, center);
+		}
+
+		public bool ContainsPoint(Vertex v)
+		{
+			return (v.Position - center).Magnitude < Radius;
 		}
 	}
 }

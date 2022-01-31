@@ -62,6 +62,11 @@ namespace Mathlib.MathG
 			return str;
 		}
 
+		public Vector2 ToVector2()
+		{
+			return new Vector2(values[0], values[1]);
+		}
+
 		#region Operators
 		public static Vector operator -(Vector a)
 		{

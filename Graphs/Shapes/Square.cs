@@ -29,5 +29,7 @@ namespace Mathlib.Graphs.Shapes
 			Vertices[3].SetProp(Vertex.POS_X, halfLength + center.X);
 			Vertices[3].SetProp(Vertex.POS_Y, -halfLength + center.Y);
 		}
+
+		public Square(Vector center, double sideLength) : this(center.ToVector2(), sideLength) { }
 	}
 }
