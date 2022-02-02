@@ -94,5 +94,17 @@ namespace Mathlib.Sys
 			}
 			reader.Close();
 		}
+
+		internal static void ClearLastLine()
+		{
+			// Get the line index of the last line.
+			int currentLineCursor = Console.CursorTop - 1;
+			// Move the cursor to the start of that line.
+			Console.SetCursorPosition(0, currentLineCursor);
+			// Write a bunch of whitespace to overwrite anything on that line.
+			Console.Write(new string(' ', Console.WindowWidth));
+			// Move the cursor back to the start of the line.
+			Console.SetCursorPosition(0, currentLineCursor);
+		}
 	}
 }

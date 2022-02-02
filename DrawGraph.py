@@ -29,9 +29,9 @@ def normalize_positions():
 		v['Properties'][1]['Value'] = v['Properties'][1]['Value'] - min_y
 
 def get_plot_size(vertices, radius, padding, scale):
-	leftmost = 99999
+	leftmost = 0
 	rightmost = -99999
-	upmost = 99999
+	upmost = 0
 	downmost = -99999
 
 	# Calculate the center point of each node, as specified in its properties
