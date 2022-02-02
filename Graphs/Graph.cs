@@ -332,11 +332,16 @@ namespace Mathlib.Graphs
 			Graph triangulation = Union(this, superTriangle);
 			triangulation.Rename("Triangulation");
 
+			LoadingBar bar = new LoadingBar("Triangulating", Vertices.Count);
+
 			// Add all points one at a time to the triangulation.
 			for (int i = 0; i < Vertices.Count; i++)
 			{
 				if (Vertices.Count > 64)
-					Console.WriteLine($"Triangulating... {i + 1}/{Vertices.Count}");
+				{
+					bar.Progress = i + 1;
+					//Console.WriteLine($"Triangulating... {i + 1}/{Vertices.Count}");
+				}
 				
 				List<Triangle> badTriangles = new List<Triangle>();
 				// First find all the triangles that are no longer valid due to the insertion.
@@ -569,7 +574,7 @@ namespace Mathlib.Graphs
 		#region Centrality measures
 		// Harmonic Centrality of a vertex v.
 		// Eq. 3.2 on page 230 of "Axioms for Centrality" (Boldi & Vigna)
-		public double HarmonicCentrality(Vertex v)
+		public double HarmonicCentrality(Vertex v, bool setProp = false)
 		{
 			double centrality = 0;
 
@@ -617,7 +622,8 @@ namespace Mathlib.Graphs
 				}
 			}
 
-			v.SetProp("harmonicCentrality", centrality);
+			if (setProp)
+				v.SetProp("harmonicCentrality", centrality);
 			return centrality;
 		}
 
@@ -657,6 +663,57 @@ namespace Mathlib.Graphs
 			}
 
 			return 1d / centrality;
+		}
+
+		public int RadiusOfCentrality(Vertex v)
+		{
+			// Start calculating centrality with radius 0.
+			// Then v is trivially the most central vertex.
+			int radius = 0;
+			Graph G_0 = Subgraph(v, radius);
+			bool isMostCental;
+			v.SetProp("radiusOfCentrality", radius);
+			// Initialize the next subgraph in the sequence.
+			// Initializing it to G_0 is important for when the loop is entered and G_0 is overwritten.
+			Graph G_n = G_0;
+
+			// Loop at least once to check.
+			do
+			{
+				G_0 = G_n;
+				radius++;
+
+				G_n = Subgraph(v, radius);
+				// Calculate the harmonic centrality of every vertex in the subgraph.
+				foreach (Vertex u in G_n.Vertices)
+					u.SetProp("harmonicCentrality", G_n.HarmonicCentrality(u));
+
+				// Determine if v is still the most central vertex in G_n.
+				isMostCental = PropertyHolder.ItemWithMaxProp<double, Vertex>(G_n.Vertices.ToArray(), "harmonicCentrality")
+					.GetProp<double>("harmonicCentrality") <= v.GetProp<double>("harmonicCentrality");
+				// If v is the most central, increment its radius.
+				if (isMostCental)
+					v.SetProp("radiusOfCentrality", radius);
+			}
+			// Continue while v is the most central vertex in its graph,
+			// and also while the subgraph with radius n has fewer vertices than the subgraph with radius n+1.
+			// This condition implies that the graph has not reached its maximum radius, and there is still more to check.
+			while (isMostCental && G_0.Vertices.Count < G_n.Vertices.Count);
+
+			// At this point, if "isMostCentral" is true, that means v is the most central vertex in the whole graph
+			// (or rather, it's connected component.)
+			// So what happens is the loop reaches everything it can, then checks (and increments the radius) one more time
+			// in which it decides "yep, this vertex is still the most central," before realizing that the radius it is looking in
+			// is farther than actually makes sense.
+			//
+			// In short, the most central vertex gets its radius set 1 higher than it should, so that is adjusted here.
+			if (isMostCental)
+			{
+				radius--;
+				v.SetProp("radiusOfCentrality", radius);
+			}
+
+			return radius;
 		}
 		#endregion
 
@@ -714,11 +771,12 @@ namespace Mathlib.Graphs
 			{
 				File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
 			}
+			Console.WriteLine($"Saved to {fileName}");
 		}
 
 		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
 		{
-			Save(Commands.RootFolder + folder, vertProps, edgeProps);
+			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.json {folder} true");
 		}
 
