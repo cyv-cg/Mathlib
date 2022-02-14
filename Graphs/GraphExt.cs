@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Mathlib.MathG;
 using Mathlib.Sys;
+using Mathlib.Graphs.Shapes;
+using Mathlib.Arrays;
 
 namespace Mathlib.Graphs
 {
@@ -10,6 +13,169 @@ namespace Mathlib.Graphs
 		public static Vertex[] Incidence(Edge e)
 		{
 			return new IncidenceData(e).endpoints;
+		}
+
+		/// <summary>
+		/// Create a Delaunay Triangulation of the graph using the Bowyer-Watson algorithm.
+		/// https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
+		/// </summary>
+		/// <returns></returns>
+		public static Graph Triangulate(this Graph G)
+		{
+			List<Triangle> tris = new List<Triangle>();
+
+			double x_max = int.MinValue;
+			double x_min = int.MaxValue;
+			double y_max = int.MinValue;
+			double y_min = int.MaxValue;
+			// Find the extreme points of the bounds.
+			foreach (Vertex v in G.Vertices)
+			{
+				if (v.Position.X < x_min)
+					x_min = v.Position.X;
+				if (v.Position.X > x_max)
+					x_max = v.Position.X;
+
+				if (v.Position.Y < y_min)
+					y_min = v.Position.Y;
+				if (v.Position.Y > y_max)
+					y_max = v.Position.Y;
+			}
+
+			// Add some buffer to the extreme coordinates so they are slightly separated from the points.
+			x_max += 1;
+			x_min -= 1;
+			y_max += 1;
+			y_min -= 1;
+
+			// Square bounds covering all points.
+			Square squareBounds = new Square(0.5 * new Vector2(x_min + x_max, y_min + y_max), Math.Max(Math.Abs(x_max - x_min), Math.Abs(y_max - y_min)));
+			// Use that square to create a triangle that also covers all points.
+			Triangle superTriangle = Triangle.Circumscribe(squareBounds);
+			superTriangle.Rename("Super Triangle");
+			// Add the super triangle to the list of triangles.
+			tris.Add(superTriangle);
+
+			// Create a new graph that will store the triangulation.
+			Graph triangulation = GraphExt.Union(G, superTriangle);
+			triangulation.Rename("Triangulation");
+
+			LoadingBar bar = new LoadingBar("Triangulating", G.Vertices.Count);
+
+			// Add all points one at a time to the triangulation.
+			for (int i = 0; i < G.Vertices.Count; i++)
+			{
+				if (G.Vertices.Count > 64)
+				{
+					bar.Progress = i + 1;
+				}
+
+				List<Triangle> badTriangles = new List<Triangle>();
+				// First find all the triangles that are no longer valid due to the insertion.
+				foreach (Triangle t in tris)
+				{
+					Circle circumcircle = Circle.Circumscribe(t);
+					if (circumcircle.ContainsPoint(G.Vertices[i]))
+						badTriangles.Add(t);
+				}
+				List<Edge> polygon = new List<Edge>();
+				// Find the boundary of the polygonal hole.
+				foreach (Triangle t in badTriangles)
+				{
+					foreach (Edge e in t.Edges)
+					{
+						bool isShared = false;
+						foreach (Triangle s in badTriangles)
+						{
+							if (s == t)
+								continue;
+							// Find all edges that are shared between 2 or more bad triangles.
+							foreach (Edge f in s.Edges)
+							{
+								if ((f.Initial == e.Initial && f.Terminal == e.Terminal) || (f.Terminal == e.Initial && f.Initial == e.Terminal))
+								{
+									isShared = true;
+									break;
+								}
+							}
+						}
+						if (!isShared)
+							polygon.Add(e);
+					}
+				}
+				// Remove them from the graph.
+				foreach (Triangle t in badTriangles)
+					tris.Remove(t);
+				// The polygon stores edges that are sill valid to use, so put them back.
+				foreach (Edge e in polygon)
+				{
+					Triangle newTri = new Triangle(e.Initial, e.Terminal, G.Vertices[i]);
+					tris.Add(newTri);
+				}
+			}
+			// Add every edge from the valid triangles to the triangulation.
+			foreach (Triangle t in tris)
+			{
+				foreach (Edge e in t.Edges)
+					triangulation.AddEdge(e);
+			}
+			// Done inserting, now clean up.
+			foreach (Vertex v in superTriangle.Vertices)
+				triangulation.RemoveVertex(v);
+
+			return triangulation;
+		}
+
+		public static Graph Union(params Graph[] graphs)
+		{
+			Vertex[] verts = new Vertex[0];
+			Edge[] edges = new Edge[0];
+			int numVerts = 0;
+
+			foreach (Graph H in graphs)
+			{
+				foreach (Vertex v in H.Vertices)
+					v.ChangeId(v.Id + numVerts);
+				numVerts += H.Vertices.Count;
+				verts = verts.Union(H.Vertices.ToArray());
+				edges = edges.Union(H.Edges.ToArray());
+			}
+			return new Graph(verts, edges);
+		}
+
+		/// <summary>
+		/// Create a graph with one vertex at the center, connected to a specified number of other vertices.
+		/// </summary>
+		/// <param name="spokes">Number of surrounding vertices.</param>
+		/// <returns></returns>
+		public static Graph CreateWheelGraph(int spokes, bool directed = false, string name = "New Wheel Graph")
+		{
+			// Initialize the vertex array with extra length to account for the center vertex.
+			Vertex[] verts = new Vertex[spokes + 1];
+			Edge[] edges = new Edge[spokes];
+
+			// Create the center vertex.
+			verts[0] = new Vertex(0);
+			// This vertex is at the geometric origin, (0, 0).
+			verts[0].SetProp(Vertex.POS_X, 0.0);
+			verts[0].SetProp(Vertex.POS_Y, 0.0);
+
+			// Start the loop with i=1 since the 0th vertex has already been created.
+			for (int i = 1; i < verts.Length; i++)
+			{
+				// Create a new vertex.
+				verts[i] = new Vertex(i);
+				// The new vertex is placed along a circle around the center vertex.
+				// As new vertices are created, they are placed at an angle starting at 0 up to just under 2*pi.
+				double angle = 2 * Math.PI * ((double)(i - 1) / spokes);
+				verts[i].SetProp(Vertex.POS_X, Math.Cos(angle));
+				verts[i].SetProp(Vertex.POS_Y, -Math.Sin(angle));
+				// Create an edge from the center vertex to the new vertex.
+				// The subscript offset is because the vertex array is 1 ahead of the edge array.
+				edges[i - 1] = new Edge(verts[0], verts[i]);
+			}
+			// Once these properties are set, it is as simple as creating any other graph.
+			return new Graph(verts, edges, name, directed);
 		}
 
 		/// <summary>
@@ -97,6 +263,31 @@ namespace Mathlib.Graphs
 			}
 			// Now we have a visually appealing random graph!
 			return G;
+		}
+
+		public static Graph Grid(Graph G)
+		{
+			Vertex leftmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
+			Vertex rightmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
+			Vertex downmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
+			Vertex upmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
+
+			Vertex A = new Vertex(0);
+			Vertex B = new Vertex(1);
+			Vertex C = new Vertex(2);
+			Vertex D = new Vertex(3);
+
+			A.SetProp(Vertex.POS_X, Math.Min(leftmost.Position.X, 0));
+			A.SetProp<double>(Vertex.POS_Y, 0);
+			B.SetProp(Vertex.POS_X, Math.Max(rightmost.Position.X, 0));
+			B.SetProp<double>(Vertex.POS_Y, 0);
+
+			C.SetProp<double>(Vertex.POS_X, 0);
+			C.SetProp(Vertex.POS_Y, Math.Min(downmost.Position.Y, 0));
+			D.SetProp<double>(Vertex.POS_X, 0);
+			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.Y, 0));
+
+			return new Graph(new Vertex[] { A, B, C, D }, new Edge[] { new Edge(A, B), new Edge(C, D) }, "Grid", false, false);
 		}
 	}
 
