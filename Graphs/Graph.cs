@@ -238,7 +238,7 @@ namespace Mathlib.Graphs
 		/// <param name="source">The first vertex added to the subgraph, from which the graph grows.</param>
 		/// <param name="radius">Maximum unweighted distance from the source vertex.</param>
 		/// <returns></returns>
-		public Graph Subgraph(Vertex source, int radius)
+		public Graph InducedSubgraph(Vertex source, int radius)
 		{
 			// Initialize relevant properties to the default value.
 			foreach (Vertex v in Vertices)
@@ -667,10 +667,10 @@ namespace Mathlib.Graphs
 
 		public int RadiusOfCentrality(Vertex v)
 		{
-			// Start calculating centrality with radius 0.
+			// Start calculating harmonic centrality with radius 0.
 			// Then v is trivially the most central vertex.
 			int radius = 0;
-			Graph G_0 = Subgraph(v, radius);
+			Graph G_0 = InducedSubgraph(v, radius);
 			bool isMostCental;
 			v.SetProp("radiusOfCentrality", radius);
 			// Initialize the next subgraph in the sequence.
@@ -683,7 +683,7 @@ namespace Mathlib.Graphs
 				G_0 = G_n;
 				radius++;
 
-				G_n = Subgraph(v, radius);
+				G_n = InducedSubgraph(v, radius);
 				// Calculate the harmonic centrality of every vertex in the subgraph.
 				foreach (Vertex u in G_n.Vertices)
 					u.SetProp("harmonicCentrality", G_n.HarmonicCentrality(u));

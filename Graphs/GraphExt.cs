@@ -24,7 +24,7 @@ namespace Mathlib.Graphs
 		public static Graph RandomGraph(int vertices, double edgeDensityPercent = 0.5, double min = -5, double max = 5, int resolution = 1000)
 		{
 			// Choose a radius around each vertex where other vertices are prohibitied from being placed. (if possible).
-			double radius = (resolution / 2d) + 1;
+			double radius = resolution / 150d;
 			// Create a new random object to handle the random number generation.
 			Random rand = new Random();
 

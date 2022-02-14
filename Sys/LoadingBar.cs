@@ -42,6 +42,8 @@ namespace Mathlib.Sys
 		// Whether or not the bar has been displayed yet.
 		// True if it hasn't, false if it has.
 		private bool firstPass = true;
+		// Line index for the loading bar in the console.
+		private int lineIndex;
 
 		public LoadingBar(string title, int maxValue)
 		{
@@ -57,7 +59,10 @@ namespace Mathlib.Sys
 				Commands.ClearLastLine();
 			// Note that the bar has been drawn before.
 			else
+			{
 				firstPass = false;
+				lineIndex = Math.Max(Console.CursorTop - 1, 0);
+			}
 			// Redraw the bar.
 			DrawBar();
 		}

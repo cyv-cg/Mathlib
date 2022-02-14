@@ -15,7 +15,7 @@ namespace Mathlib.Graphs
 		public Vector2 Position { get 
 			{
 				if (!HasProp(POS_X))
-					throw new Exception($"Vetex '{Id}' has no 'x' position.");
+					throw new Exception($"Vetrex '{Id}' has no 'x' position.");
 				if (!HasProp(POS_Y))
 					throw new Exception($"Vertex '{Id}' has no 'y' position.");
 

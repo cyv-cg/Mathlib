@@ -95,10 +95,10 @@ namespace Mathlib.Sys
 			reader.Close();
 		}
 
-		internal static void ClearLastLine()
+		internal static void ClearLastLine(int index = -1)
 		{
 			// Get the line index of the last line.
-			int currentLineCursor = Console.CursorTop - 1;
+			int currentLineCursor = index == -1 ? Console.CursorTop - 1 : index;
 			// Move the cursor to the start of that line.
 			Console.SetCursorPosition(0, currentLineCursor);
 			// Write a bunch of whitespace to overwrite anything on that line.

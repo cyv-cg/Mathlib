@@ -10,7 +10,7 @@ namespace Mathlib
 		public static void Main()
 		{
 			int resolution = 2048;
-			Graph G = GraphExt.RandomGraph(1024, 0.5, -50, 50, resolution);
+			Graph G = GraphExt.RandomGraph(100, 0.5, -10, 10, resolution);
 			G.Rename("Graf");
 
 			//foreach (Vertex v in G.Vertices)
@@ -120,7 +120,7 @@ namespace Mathlib
 			Console.WriteLine();
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{G.Name.Replace(' ', '_')}.json _outputs {true} {false} {false}");
 
-			Graph H = G.Subgraph(D, 1);
+			Graph H = G.InducedSubgraph(D, 1);
 			H.Save(Commands.RootFolder + "_outputs", new string[] { Vertex.POS_X, Vertex.POS_Y }, new string[] { Edge.WEIGHT });
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {2000} _outputs/{H.Name.Replace(' ', '_')}.json _outputs {true} {false} {false}");
 		}
