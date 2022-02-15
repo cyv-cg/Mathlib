@@ -17,17 +17,17 @@ namespace Mathlib.Graphs.Shapes
 
 			double halfLength = sideLength / 2;
 
-			Vertices[0].SetProp(Vertex.POS_X, -halfLength + center.X);
-			Vertices[0].SetProp(Vertex.POS_Y, halfLength + center.Y);
+			Vertices[0].SetProp(Vertex.POS_X, -halfLength + center.x);
+			Vertices[0].SetProp(Vertex.POS_Y, halfLength + center.y);
 
-			Vertices[1].SetProp(Vertex.POS_X, halfLength + center.X);
-			Vertices[1].SetProp(Vertex.POS_Y, halfLength + center.Y);
+			Vertices[1].SetProp(Vertex.POS_X, halfLength + center.x);
+			Vertices[1].SetProp(Vertex.POS_Y, halfLength + center.y);
 
-			Vertices[2].SetProp(Vertex.POS_X, -halfLength + center.X);
-			Vertices[2].SetProp(Vertex.POS_Y, -halfLength + center.Y);
+			Vertices[2].SetProp(Vertex.POS_X, -halfLength + center.x);
+			Vertices[2].SetProp(Vertex.POS_Y, -halfLength + center.y);
 
-			Vertices[3].SetProp(Vertex.POS_X, halfLength + center.X);
-			Vertices[3].SetProp(Vertex.POS_Y, -halfLength + center.Y);
+			Vertices[3].SetProp(Vertex.POS_X, halfLength + center.x);
+			Vertices[3].SetProp(Vertex.POS_Y, -halfLength + center.y);
 		}
 
 		public Square(Vector center, double sideLength) : this(center.ToVector2(), sideLength) { }

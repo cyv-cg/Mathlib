@@ -17,13 +17,13 @@ namespace Mathlib.Graphs
 				Vector2 s = Initial.Position;
 				Vector2 e = Terminal.Position;
 
-				return (e.Y - s.Y) / (e.X - s.X);
+				return (e.y - s.y) / (e.x - s.x);
 			}
 		}
 
 		public double Length { get
 			{
-				return (Initial.Position - Terminal.Position).Magnitude;
+				return (Initial.Position - Terminal.Position).Magnitude();
 			}
 		}
 

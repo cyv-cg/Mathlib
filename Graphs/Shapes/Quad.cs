@@ -35,14 +35,14 @@ namespace Mathlib.Graphs.Shapes
 			Vertex C = new Vertex(2);
 			Vertex D = new Vertex(3);
 
-			A.SetProp(Vertex.POS_X, a.X);
-			A.SetProp(Vertex.POS_Y, a.Y);
-			B.SetProp(Vertex.POS_X, b.X);
-			B.SetProp(Vertex.POS_Y, b.Y);
-			C.SetProp(Vertex.POS_X, c.X);
-			C.SetProp(Vertex.POS_Y, c.Y);
-			D.SetProp(Vertex.POS_X, d.X);
-			D.SetProp(Vertex.POS_Y, d.Y);
+			A.SetProp(Vertex.POS_X, a.x);
+			A.SetProp(Vertex.POS_Y, a.y);
+			B.SetProp(Vertex.POS_X, b.x);
+			B.SetProp(Vertex.POS_Y, b.y);
+			C.SetProp(Vertex.POS_X, c.x);
+			C.SetProp(Vertex.POS_Y, c.y);
+			D.SetProp(Vertex.POS_X, d.x);
+			D.SetProp(Vertex.POS_Y, d.y);
 
 			Edge AB = new Edge(A, B);
 			Edge AC = new Edge(A, C);

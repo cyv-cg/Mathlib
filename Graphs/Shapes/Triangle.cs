@@ -27,12 +27,12 @@ namespace Mathlib.Graphs.Shapes
 			Vertex B = new Vertex(1);
 			Vertex C = new Vertex(2);
 
-			A.SetProp(Vertex.POS_X, a.X);
-			A.SetProp(Vertex.POS_Y, a.Y);
-			B.SetProp(Vertex.POS_X, b.X);
-			B.SetProp(Vertex.POS_Y, b.Y);
-			C.SetProp(Vertex.POS_X, c.X);
-			C.SetProp(Vertex.POS_Y, c.Y);
+			A.SetProp(Vertex.POS_X, a.x);
+			A.SetProp(Vertex.POS_Y, a.y);
+			B.SetProp(Vertex.POS_X, b.x);
+			B.SetProp(Vertex.POS_Y, b.y);
+			C.SetProp(Vertex.POS_X, c.x);
+			C.SetProp(Vertex.POS_Y, c.y);
 
 			Edge AB = new Edge(A, B);
 			Edge AC = new Edge(A, C);
@@ -121,7 +121,7 @@ namespace Mathlib.Graphs.Shapes
 			Vertex D = s.Vertices[3];
 
 			// Align vertex E in the middle of the square horizontally and exactly the same height as the square above it.
-			E.SetProp(Vertex.POS_X, s.center.X);
+			E.SetProp(Vertex.POS_X, s.center.x);
 			E.SetProp(Vertex.POS_Y, A.GetProp<double>(Vertex.POS_Y) + s.sideLength);
 			// Align the other 2 vertices of the triangle with the bottom 2 vertices of the square.
 			// Also put them half a side-length away horizontally

@@ -27,8 +27,8 @@ namespace Mathlib.Graphs.Shapes
 				// The new vertex is placed along a circle around the center vertex.
 				// As new vertices are created, they are placed at an angle starting at 0 up to just under 2*pi.
 				double angle = 2 * Math.PI * ((double)(i - 1) / vertices);
-				verts[i].SetProp(Vertex.POS_X, center.X + radius * Math.Cos(angle));
-				verts[i].SetProp(Vertex.POS_Y, center.Y - radius * Math.Sin(angle));
+				verts[i].SetProp(Vertex.POS_X, center.x + radius * Math.Cos(angle));
+				verts[i].SetProp(Vertex.POS_Y, center.y + radius * Math.Sin(angle));
 
 				if (i > 0)
 				{
@@ -58,14 +58,14 @@ namespace Mathlib.Graphs.Shapes
 			Vector2 center = t.Center();
 			//Console.WriteLine($"tri center: {center}");
 
-			double radius = Math.Sqrt( Math.Pow(E.X - center.X, 2) + Math.Pow(E.Y - center.Y, 2) );
+			double radius = Math.Sqrt( Math.Pow(E.x - center.x, 2) + Math.Pow(E.y - center.y, 2) );
 
 			return new Circle(vertices, radius, center);
 		}
 
 		public bool ContainsPoint(Vertex v)
 		{
-			return (v.Position - center).Magnitude < Radius;
+			return (v.Position - center).Magnitude() < Radius;
 		}
 	}
 }
