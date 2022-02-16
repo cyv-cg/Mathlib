@@ -1,10 +1,20 @@
-﻿namespace Mathlib.Graphs
+﻿using System;
+using System.Collections.Generic;
+
+using Mathlib.Sys;
+
+namespace Mathlib.Graphs
 {
 	public static class Centrality
 	{
+		public const string HARMONIC = "harmonicCentrality";
+		public const string CLOSENESS = "closenessCentrality";
+		public const string RADIUS = "radiusOfCentrality";
+		public const string BETWEENNESS = "betweennessCentrality";
+
 		// Harmonic Centrality of a vertex v.
 		// Eq. 3.2 on page 230 of "Axioms for Centrality" (Boldi & Vigna)
-		public static double HarmonicCentrality(this Graph G, Vertex v, bool setProp = false)
+		public static double HarmonicCentrality(this Graph G, Vertex v)
 		{
 			double centrality = 0;
 
@@ -52,14 +62,13 @@
 				}
 			}
 
-			if (setProp)
-				v.SetProp("harmonicCentrality", centrality);
+			v.SetProp(HARMONIC, centrality);
 			return centrality;
 		}
 
 		// Closeness of a vertex v.
 		// Eq. 3.1 on page 229 of "Axioms for Centrality" (Boldi & Vigna)
-		public static double Closeness(this Graph G, Vertex v, bool setProp = false)
+		public static double Closeness(this Graph G, Vertex v)
 		{
 			double centrality = 0;
 
@@ -92,19 +101,18 @@
 				}
 			}
 
-			if (setProp)
-				v.SetProp("closeness", 1d / centrality);
+			v.SetProp(CLOSENESS, 1d / centrality);
 			return 1d / centrality;
 		}
 
-		public static int RadiusOfCentrality(this Graph G, Vertex v)
+		public static int RadiusOfCentrality(this Graph G, Vertex v, string measure = HARMONIC)
 		{
-			// Start calculating harmonic centrality with radius 0.
+			// Start calculating centrality with radius 0.
 			// Then v is trivially the most central vertex.
 			int radius = 0;
 			Graph G_0 = G.InducedSubgraph(v, radius);
 			bool isMostCental;
-			v.SetProp("radiusOfCentrality", radius);
+			v.SetProp(RADIUS, radius);
 			// Initialize the next subgraph in the sequence.
 			// Initializing it to G_0 is important for when the loop is entered and G_0 is overwritten.
 			Graph G_n = G_0;
@@ -116,16 +124,40 @@
 				radius++;
 
 				G_n = G.InducedSubgraph(v, radius);
-				// Calculate the harmonic centrality of every vertex in the subgraph.
-				foreach (Vertex u in G_n.Vertices)
-					u.SetProp("harmonicCentrality", G_n.HarmonicCentrality(u));
+
+				// Compute the centrality of the subgraph based on the specified measure.
+				switch (measure)
+				{
+					// HARMONIC and CLOSENESS run a similar task, so their cases are lumped together.
+					case HARMONIC:
+					case CLOSENESS:
+						foreach (Vertex u in G_n.Vertices)
+						{
+							if (measure == HARMONIC)
+								u.SetProp(HARMONIC, G_n.HarmonicCentrality(u));
+							else if (measure == CLOSENESS)
+								u.SetProp(CLOSENESS, G_n.Closeness(u));
+						}
+						break;
+					// Case for betweenness centrality, which takes its own special calculations.
+					case BETWEENNESS:
+						Dictionary<Vertex, double> betweenness = G.Betweenness();
+						foreach (Vertex w in G.Vertices)
+							w.SetProp(BETWEENNESS, betweenness[w]);
+						break;
+					// Undefined cases.
+					case RADIUS:
+						throw new ArgumentException($"{RADIUS} cannot be computed using {RADIUS}");
+					default:
+						throw new ArgumentException($"Measure '{measure}' not defined.");
+				}
 
 				// Determine if v is still the most central vertex in G_n.
-				isMostCental = PropertyHolder.ItemWithMaxProp<double, Vertex>(G_n.Vertices.ToArray(), "harmonicCentrality")
-					.GetProp<double>("harmonicCentrality") <= v.GetProp<double>("harmonicCentrality");
+				isMostCental = PropertyHolder.ItemWithMaxProp<double, Vertex>(G_n.Vertices.ToArray(), measure).GetProp<double>(measure)
+					<= v.GetProp<double>(measure);
 				// If v is the most central, increment its radius.
 				if (isMostCental)
-					v.SetProp("radiusOfCentrality", radius);
+					v.SetProp(RADIUS, radius);
 			}
 			// Continue while v is the most central vertex in its graph,
 			// and also while the subgraph with radius n has fewer vertices than the subgraph with radius n+1.
@@ -142,10 +174,121 @@
 			if (isMostCental)
 			{
 				radius--;
-				v.SetProp("radiusOfCentrality", radius);
+				v.SetProp(RADIUS, radius);
 			}
 
 			return radius;
+		}
+		public static void RadiusOfCentrality(this Graph G, string measure = HARMONIC)
+		{
+			LoadingBar bar = new LoadingBar("Finding radii of centrality", G.Vertices.Count);
+			foreach (Vertex v in G.Vertices)
+			{
+				G.RadiusOfCentrality(v, measure);
+				bar.Progress++;
+			}
+		}
+
+		// https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
+		public static Dictionary<Vertex, Dictionary<Vertex, double>> Floyd_Warshall(this Graph G)
+		{
+			Dictionary<Vertex, Dictionary<Vertex, double>> dist = new Dictionary<Vertex, Dictionary<Vertex, double>>();
+			foreach (Vertex u in G.Vertices)
+			{
+				dist.Add(u, new Dictionary<Vertex, double>());
+				foreach (Vertex w in G.Vertices)
+				{
+					dist[u].Add(w, double.PositiveInfinity);
+				}
+			}
+
+			foreach (Edge e in G.Edges)
+			{
+				dist[e.Initial][e.Terminal] = G.Weighted ? e.GetProp<double>(Edge.WEIGHT) : 1.0;
+				if (!G.Directed)
+					dist[e.Terminal][e.Initial] = G.Weighted ? e.GetProp<double>(Edge.WEIGHT) : 1.0;
+			}
+			foreach (Vertex u in G.Vertices)
+				dist[u][u] = 0.0;
+
+			foreach (Vertex k in G.Vertices)
+			{
+				foreach (Vertex i in G.Vertices)
+				{
+					foreach (Vertex j in G.Vertices)
+					{
+						if (dist[i][j] > dist[i][k] + dist[k][j])
+						{
+							dist[i][j] = dist[i][k] + dist[k][j];
+							if (!G.Directed)
+								dist[j][i] = dist[i][k] + dist[k][j];
+						}
+					}
+				}
+			}
+			
+			return dist;
+		}
+
+		// Algorithm 1 from "A Faster Algorithm for Betweenness Centrality" by Ulrik Brandes.
+		public static Dictionary<Vertex, double> Betweenness(this Graph G)
+		{
+			Dictionary<Vertex, double> C_B = new Dictionary<Vertex, double>();
+			foreach (Vertex v in G.Vertices)
+				C_B.Add(v, 0);
+
+			foreach (Vertex s in G.Vertices)
+			{
+				Stack<Vertex> S = new Stack<Vertex>();
+				Dictionary<Vertex, List<Vertex>> P = new Dictionary<Vertex, List<Vertex>>();
+				foreach (Vertex w in G.Vertices) P.Add(w, new List<Vertex>());
+
+				Dictionary<Vertex, int> σ = new Dictionary<Vertex, int>();
+				foreach (Vertex t in G.Vertices) σ.Add(t, 0);
+				σ[s] = 1;
+
+				Dictionary<Vertex, int> d = new Dictionary<Vertex, int>();
+				foreach (Vertex t in G.Vertices) d.Add(t, -1);
+				d[s] = 0;
+
+				Queue<Vertex> Q = new Queue<Vertex>();
+				Q.Enqueue(s);
+				while (Q.Count > 0)
+				{
+					Vertex v = Q.Dequeue();
+					S.Push(v);
+					foreach (Vertex w in G.Neighbors(v))
+					{
+						// w found for the first time?
+						if (d[w] < 0)
+						{
+							Q.Enqueue(w);
+							d[w] = d[v] + 1;
+						}
+						// shortest path to w via v?
+						if (d[w] == d[v] + 1)
+						{
+							σ[w] = σ[w] + σ[v];
+							P[w].Add(v);
+						}
+					}
+				}
+
+				Dictionary<Vertex, int> δ = new Dictionary<Vertex, int>();
+				foreach (Vertex v in G.Vertices) δ.Add(v, 0);
+				// S returns vertices in order of non-increasing distance from s
+				while (S.Count > 0)
+				{
+					Vertex w = S.Pop();
+					foreach (Vertex v in P[w]) δ[v] = δ[v] + (σ[v] / σ[w] * (1 + δ[w]));
+					if (w != s) C_B[w] = (C_B[w] + δ[w]) / 2d;
+				}
+			}
+
+			foreach (Vertex v in C_B.Keys)
+				v.SetProp<double>(BETWEENNESS, C_B[v]);
+
+			return C_B;
 		}
 	}
 }

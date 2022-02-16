@@ -45,10 +45,16 @@ namespace Mathlib.Sys
 		// Line index for the loading bar in the console.
 		private int lineIndex;
 
+		private readonly DateTime startTime;
+
+		private TimeSpan elapsedTime;
+
 		public LoadingBar(string title, int maxValue)
 		{
 			Title = title;
 			MaxValue = maxValue;
+
+			startTime = DateTime.Now;
 		}
 
 		// Redraw the loading bar in the console.
@@ -63,6 +69,9 @@ namespace Mathlib.Sys
 				firstPass = false;
 				lineIndex = Math.Max(Console.CursorTop - 1, 0);
 			}
+
+			elapsedTime = DateTime.Now - startTime;
+
 			// Redraw the bar.
 			DrawBar();
 		}
@@ -86,7 +95,7 @@ namespace Mathlib.Sys
 			// If the task is complete, end with "Done", otherwise the completion percent.
 			string message = Progress == MaxValue ? "Done" : $"{(int)(100 * percent)}%";
 			// Close the bar and end the line.
-			bar += $"{RIGHT_BOUND} {message}\n";
+			bar += $"{RIGHT_BOUND} {message} | time elapsed: {elapsedTime}\n";
 			// Draw the bar.
 			Console.Write(bar);
 		}

@@ -5,6 +5,7 @@ using Mathlib.MathG;
 using Mathlib.Sys;
 using Mathlib.Graphs.Shapes;
 using Mathlib.Arrays;
+using Mathlib.MathG.Colors;
 
 namespace Mathlib.Graphs
 {
@@ -13,6 +14,46 @@ namespace Mathlib.Graphs
 		public static Vertex[] Incidence(Edge e)
 		{
 			return new IncidenceData(e).endpoints;
+		}
+
+		public static Matrix AdjMat(this Graph G)
+		{
+			int V = G.Vertices.Count;
+			Matrix adj = new Matrix(V, V);
+
+			foreach (Edge e in G.Edges)
+			{
+				adj.Set(e.Initial.Id, e.Terminal.Id, 1);
+				if (!G.Directed)
+					adj.Set(e.Terminal.Id, e.Initial.Id, 1);
+			}
+
+			return adj;
+		}
+
+		public static void ColorByPropDouble(this Graph G, string doubleProp, Gradient gradient = null)
+		{
+			if (gradient == null)
+				gradient = Gradient.Rainbow;
+
+			double maxValue = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), doubleProp).GetProp<double>(doubleProp);
+			foreach (Vertex v in G.Vertices)
+			{
+				double percent = Math.Abs(v.GetProp<double>(doubleProp) / maxValue);
+				v.SetProp(Vertex.COLOR, gradient.Evaluate(percent).Hex());
+			}
+		}
+		public static void ColorByPropInt(this Graph G, string intProp, Gradient gradient = null)
+		{
+			if (gradient == null)
+				gradient = Gradient.Rainbow;
+
+			int maxValue = PropertyHolder.ItemWithMaxProp<int, Vertex>(G.Vertices.ToArray(), intProp).GetProp<int>(intProp);
+			foreach (Vertex v in G.Vertices)
+			{
+				double percent = Math.Abs(v.GetProp<int>(intProp) / (double)maxValue);
+				v.SetProp(Vertex.COLOR, gradient.Evaluate(percent).Hex());
+			}
 		}
 
 		/// <summary>
@@ -31,15 +72,15 @@ namespace Mathlib.Graphs
 			// Find the extreme points of the bounds.
 			foreach (Vertex v in G.Vertices)
 			{
-				if (v.Position.X < x_min)
-					x_min = v.Position.X;
-				if (v.Position.X > x_max)
-					x_max = v.Position.X;
+				if (v.Position.x < x_min)
+					x_min = v.Position.x;
+				if (v.Position.x > x_max)
+					x_max = v.Position.x;
 
-				if (v.Position.Y < y_min)
-					y_min = v.Position.Y;
-				if (v.Position.Y > y_max)
-					y_max = v.Position.Y;
+				if (v.Position.y < y_min)
+					y_min = v.Position.y;
+				if (v.Position.y > y_max)
+					y_max = v.Position.y;
 			}
 
 			// Add some buffer to the extreme coordinates so they are slightly separated from the points.
@@ -65,10 +106,7 @@ namespace Mathlib.Graphs
 			// Add all points one at a time to the triangulation.
 			for (int i = 0; i < G.Vertices.Count; i++)
 			{
-				if (G.Vertices.Count > 64)
-				{
-					bar.Progress = i + 1;
-				}
+				bar.Progress = i + 1;
 
 				List<Triangle> badTriangles = new List<Triangle>();
 				// First find all the triangles that are no longer valid due to the insertion.
@@ -169,7 +207,7 @@ namespace Mathlib.Graphs
 				// As new vertices are created, they are placed at an angle starting at 0 up to just under 2*pi.
 				double angle = 2 * Math.PI * ((double)(i - 1) / spokes);
 				verts[i].SetProp(Vertex.POS_X, Math.Cos(angle));
-				verts[i].SetProp(Vertex.POS_Y, -Math.Sin(angle));
+				verts[i].SetProp(Vertex.POS_Y, Math.Sin(angle));
 				// Create an edge from the center vertex to the new vertex.
 				// The subscript offset is because the vertex array is 1 ahead of the edge array.
 				edges[i - 1] = new Edge(verts[0], verts[i]);
@@ -187,10 +225,10 @@ namespace Mathlib.Graphs
 		/// <param name="max">Maximum x/y coordinate where vertices are places.</param>
 		/// <param name="resolution">Intended size of the output image.</param>
 		/// <returns></returns>
-		public static Graph RandomGraph(int vertices, double edgeDensityPercent = 0.5, double min = -5, double max = 5, int resolution = 1000)
+		public static Graph RandomGraph(int vertices, double edgeDensityPercent = 0.5, double min = -5, double max = 5)
 		{
 			// Choose a radius around each vertex where other vertices are prohibitied from being placed. (if possible).
-			double radius = resolution / 150d;
+			double radius = 0.35d;
 			// Create a new random object to handle the random number generation.
 			Random rand = new Random();
 
@@ -232,7 +270,7 @@ namespace Mathlib.Graphs
 						if (v == null)
 							break;
 						// If this position is within a radius of another vertex, then they overlap.
-						if ((v.Position - pos).Magnitude <= radius)
+						if ((v.Position - pos).Magnitude() <= radius)
 						{
 							overlaps = true;
 							break;
@@ -240,8 +278,8 @@ namespace Mathlib.Graphs
 					}
 				}
 				// Update the vertex's position properties accordingly.
-				verts[i].SetProp(Vertex.POS_X, pos.X);
-				verts[i].SetProp(Vertex.POS_Y, pos.Y);
+				verts[i].SetProp(Vertex.POS_X, pos.x);
+				verts[i].SetProp(Vertex.POS_Y, pos.y);
 			}
 
 			// Create a new Graph object to store these vertices.
@@ -277,15 +315,15 @@ namespace Mathlib.Graphs
 			Vertex C = new Vertex(2);
 			Vertex D = new Vertex(3);
 
-			A.SetProp(Vertex.POS_X, Math.Min(leftmost.Position.X, 0));
+			A.SetProp(Vertex.POS_X, Math.Min(leftmost.Position.x, 0));
 			A.SetProp<double>(Vertex.POS_Y, 0);
-			B.SetProp(Vertex.POS_X, Math.Max(rightmost.Position.X, 0));
+			B.SetProp(Vertex.POS_X, Math.Max(rightmost.Position.x, 0));
 			B.SetProp<double>(Vertex.POS_Y, 0);
 
 			C.SetProp<double>(Vertex.POS_X, 0);
-			C.SetProp(Vertex.POS_Y, Math.Min(downmost.Position.Y, 0));
+			C.SetProp(Vertex.POS_Y, Math.Min(downmost.Position.y, 0));
 			D.SetProp<double>(Vertex.POS_X, 0);
-			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.Y, 0));
+			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.y, 0));
 
 			return new Graph(new Vertex[] { A, B, C, D }, new Edge[] { new Edge(A, B), new Edge(C, D) }, "Grid", false, false);
 		}
