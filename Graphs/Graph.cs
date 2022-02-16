@@ -61,7 +61,16 @@ namespace Mathlib.Graphs
 			return Neighbors(v).Length;
 		}
 
-		protected Edge GetEdge(Vertex initial, Vertex terminal)
+		public Vertex GetVertex(int id)
+		{
+			foreach (Vertex v in Vertices)
+			{
+				if (v.Id == id)
+					return v;
+			}
+			return null;
+		}
+		public Edge GetEdge(Vertex initial, Vertex terminal)
 		{
 			foreach (Edge e in Edges)
 			{
@@ -446,15 +455,40 @@ namespace Mathlib.Graphs
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.json {folder} true");
 		}
 
+		public static Graph Read(string fileName)
+		{
+			return Parse(new GraphSerializationData(fileName));
+		}
+		private static Graph Parse(GraphSerializationData data)
+		{
+			Graph G = new Graph(new Vertex[0], new Edge[0], data.Name, data.Directed, data.Weighted);
+
+			Vertex[] verts = new Vertex[data.Vertices.Count];
+			Edge[] edges = new Edge[data.Edges.Count];
+
+			for (int i = 0; i < data.Vertices.Count; i++)
+			{
+				verts[i] = new Vertex(data.Vertices[i]);
+				G.AddVertex(verts[i]);
+			}
+			for (int i = 0; i < data.Edges.Count; i++)
+			{
+				edges[i] = new Edge(data.Edges[i], G);
+				G.AddEdge(edges[i]);
+			}
+
+			return G;
+		}
+
 		internal struct GraphSerializationData
 		{
-			public string Name { get; private set; }
+			public string Name { get; set; }
 
-			public bool Directed { get; private set; }
-			public bool Weighted { get; private set; }
+			public bool Directed { get; set; }
+			public bool Weighted { get; set; }
 
-			public List<Vertex.VertexSerializationData> Vertices { get; private set; }
-			public List<Edge.EdgeSerializationData> Edges { get; private set; }
+			public List<Vertex.VertexSerializationData> Vertices { get; set; }
+			public List<Edge.EdgeSerializationData> Edges { get; set; }
 
 			public GraphSerializationData(Graph G, string[] vertexProps, string[] edgeProps)
 			{
@@ -474,9 +508,30 @@ namespace Mathlib.Graphs
 					Edges.Add(new Edge.EdgeSerializationData(e, edgeProps));
 			}
 
+			public GraphSerializationData(string fileName)
+			{
+				if (!File.Exists(fileName))
+					throw new IOException($"File '{fileName}' not found.");
+
+				string json = File.ReadAllText(fileName);
+
+				GraphSerializationData data = JsonSerializer.Deserialize<GraphSerializationData>(json);
+
+				Name = data.Name;
+				Directed = data.Directed;
+				Weighted = data.Weighted;
+
+				Vertices = data.Vertices;
+				Edges = data.Edges;
+			}
+
 			public override string ToString()
 			{
-				return JsonSerializer.Serialize(this);
+				JsonSerializerOptions options = new JsonSerializerOptions
+				{
+					WriteIndented = true
+				};
+				return JsonSerializer.Serialize(this, options);
 			}
 		}
 		#endregion

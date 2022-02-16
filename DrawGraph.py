@@ -204,8 +204,14 @@ try:
 
 		# Find origin point of the node.
 		origin = (positions[vertices[i]["Id"]][0] - plot_size[1]/2, positions[vertices[i]["Id"]][1] - plot_size[0]/2)
+		
 		# Draw a circle centered at that origin with radius as calculated above.
-		d.append(draw.Circle(origin[0], -origin[1], radius, fill='#ffffff', stroke_width=element_thickness, stroke='#000000'))
+		color = prop.get_prop(vertices[i], "color")
+		if color == None:
+			d.append(draw.Circle(origin[0], -origin[1], radius, fill='#ffffff', stroke_width=element_thickness, stroke='#000000'))
+		else:
+			d.append(draw.Circle(origin[0], -origin[1], radius, fill=f'#{color}', stroke_width=element_thickness, stroke='#000000'))
+		
 		# Write the id/name of the node in the center of the circle.
 		d.append(draw.Text(text, (1.8 * radius) / len(text), origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
 

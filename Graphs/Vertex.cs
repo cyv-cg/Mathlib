@@ -10,6 +10,8 @@ namespace Mathlib.Graphs
 		public const string POS_X = "xPos";
 		public const string POS_Y = "yPos";
 
+		public const string COLOR = "color";
+
 		public int Id { get; private set; }
 
 		public Vector2 Position { get 
@@ -26,6 +28,38 @@ namespace Mathlib.Graphs
 		public Vertex(int id)
 		{
 			Id = id;
+		}
+		internal Vertex(VertexSerializationData data)
+		{
+			Id = data.Id;
+
+			if (data.Properties != null)
+			{
+				foreach (KeyValuePair<string, object> pair in data.Properties)
+				{
+					if (double.TryParse(pair.Value.ToString(), out double v1))
+					{
+						if (pair.Key == POS_Y)
+						{
+							SetProp<double>(pair.Key, -v1);
+						}
+						else
+						{
+							SetProp<double>(pair.Key, v1);
+						}
+
+						continue;
+					}
+
+					if (int.TryParse(pair.Value.ToString(), out int v2))
+					{
+						SetProp<int>(pair.Key, v2);
+						continue;
+					}
+
+					SetProp<string>(pair.Key, pair.Value.ToString());
+				}
+			}
 		}
 
 		public void ChangeId(int newId)
@@ -72,9 +106,9 @@ namespace Mathlib.Graphs
 
 		internal struct VertexSerializationData
 		{
-			public int Id { get; private set; }
+			public int Id { get; set; }
 
-			public List<KeyValuePair<string, object>> Properties { get; private set; }
+			public List<KeyValuePair<string, object>> Properties { get; set; }
 
 			public VertexSerializationData(Vertex v, params string[] properties)
 			{
@@ -84,11 +118,25 @@ namespace Mathlib.Graphs
 				{
 					Properties = new List<KeyValuePair<string, object>>();
 					foreach (string key in properties)
+					{
 						if (v.HasProp(key))
-							Properties.Add(new KeyValuePair<string, object>(key, v.GetProp<object>(key)));
+						{
+							if (key == POS_Y)
+							{
+								Properties.Add(new KeyValuePair<string, object>(key, -v.GetProp<double>(POS_Y)));
+							}
+							else
+							{
+								Properties.Add(new KeyValuePair<string, object>(key, v.GetProp<object>(key)));
+							}
+							
+						}
+					}
 				}
 				else
+				{
 					Properties = null;
+				}
 			}
 
 			public override string ToString()

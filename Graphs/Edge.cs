@@ -32,6 +32,31 @@ namespace Mathlib.Graphs
 			Initial = initial;
 			Terminal = terminal;
 		}
+		internal Edge(EdgeSerializationData data, Graph G)
+		{
+			Initial = G.GetVertex(data.Initial);
+			Terminal = G.GetVertex(data.Terminal);
+
+			if (data.Properties != null)
+			{
+				foreach (KeyValuePair<string, object> pair in data.Properties)
+				{
+					if (double.TryParse(pair.Value.ToString(), out double v1))
+					{
+						SetProp<double>(pair.Key, v1);
+						continue;
+					}
+
+					if (int.TryParse(pair.Value.ToString(), out int v2))
+					{
+						SetProp<int>(pair.Key, v2);
+						continue;
+					}
+
+					SetProp<string>(pair.Key, pair.Value.ToString());
+				}
+			}
+		}
 
 		public string JSON()
 		{
@@ -45,10 +70,10 @@ namespace Mathlib.Graphs
 
 		internal struct EdgeSerializationData
 		{
-			public int Initial { get; private set; }
-			public int Terminal { get; private set; }
+			public int Initial { get; set; }
+			public int Terminal { get; set; }
 
-			public List<KeyValuePair<string,object>> Properties { get; private set; }
+			public List<KeyValuePair<string,object>> Properties { get; set; }
 
 			public EdgeSerializationData(Edge e, params string[] properties)
 			{
@@ -60,10 +85,14 @@ namespace Mathlib.Graphs
 					Properties = new List<KeyValuePair<string, object>>();
 					foreach (string key in properties)
 						if (e.HasProp(key))
+						{
 							Properties.Add(new KeyValuePair<string, object>(key, e.GetProp<object>(key)));
+						}
 				}
 				else
+				{
 					Properties = null;
+				}
 			}
 
 			public override string ToString()
