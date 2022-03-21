@@ -1,5 +1,7 @@
 scripts/__pycache__/
 _outputs/
+bin/
+obj/
 Program.cs
 *.pyc
 *.csproj
