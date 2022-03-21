@@ -15,9 +15,9 @@ namespace Mathlib
 		{
 			Test();
 
-			Graph G = Graph.Read("C:/Users/Christopher/Documents/GitHub/mathlib/mathlib/_outputs/test.json");
-			G.Rename("input_test");
-			G.SaveOut("_outputs", 2000, new string[] { Vertex.POS_X, Vertex.POS_Y, Vertex.COLOR, Centrality.RADIUS });
+			//Graph G = Graph.Read("C:/Users/Christopher/Documents/GitHub/mathlib/mathlib/_outputs/test.json");
+			//G.Rename("input_test");
+			//G.SaveOut("_outputs", 2000, new string[] { Vertex.POS_X, Vertex.POS_Y, Vertex.COLOR, Centrality.RADIUS });
 		}
 
 		static void Test()

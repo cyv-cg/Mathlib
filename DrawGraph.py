@@ -11,8 +11,8 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF, renderPM
 
 # Custom utility functions.
-import Python_Scripts.id_to_alpha as id
-import Python_Scripts.get_prop as prop
+import scripts.id_to_alpha as id
+import scripts.get_prop as prop
 
 def normalize_positions():
 	min_x = 99999

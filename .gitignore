@@ -1,0 +1,4 @@
+scripts/__pycache__/
+_outputs/
+Program.cs
+*.pyc
