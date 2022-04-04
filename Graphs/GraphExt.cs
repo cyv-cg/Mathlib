@@ -31,15 +31,20 @@ namespace Mathlib.Graphs
 			return adj;
 		}
 
-		public static void ColorByPropDouble(this Graph G, string doubleProp, Gradient gradient = null)
+		public static void ColorByPropDouble(this Graph G, string doubleProp, Gradient gradient = null, bool scale = false)
 		{
 			if (gradient == null)
 				gradient = Gradient.Rainbow;
 
+			double minValue = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), doubleProp).GetProp<double>(doubleProp);
 			double maxValue = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), doubleProp).GetProp<double>(doubleProp);
 			foreach (Vertex v in G.Vertices)
 			{
-				double percent = Math.Abs(v.GetProp<double>(doubleProp) / maxValue);
+				double percent = scale switch
+				{
+					false => Math.Abs(v.GetProp<double>(doubleProp) / maxValue),
+					true => (Math.Abs(v.GetProp<double>(doubleProp)) - minValue) / (maxValue - minValue)
+				};
 				v.SetProp(Vertex.COLOR, gradient.Evaluate(percent).Hex());
 			}
 		}
