@@ -213,7 +213,8 @@ try:
 			d.append(draw.Circle(origin[0], -origin[1], radius, fill=f'#{color}', stroke_width=element_thickness, stroke='#000000'))
 		
 		# Write the id/name of the node in the center of the circle.
-		d.append(draw.Text(text, (1.8 * radius) / len(text), origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle'))
+		font_size = (1.8 * radius) / len(text)
+		d.append(draw.Text(text, font_size, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle', stroke='#ffffff', stroke_width=str(font_size / 100)))
 
 	# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
 	file_name = data['Name'].replace(" ", "_")
