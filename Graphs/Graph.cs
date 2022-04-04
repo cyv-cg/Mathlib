@@ -445,7 +445,7 @@ namespace Mathlib.Graphs
 
 		public void Save(string path, string[] vertexProps = null, string[] edgeProps = null)
 		{
-			fileName = path + "/" + Name.Replace(" ", "_") + ".json";
+			fileName = path + "/" + Name.Replace(" ", "_") + ".graph";
 
 			if (!File.Exists(fileName))
 			{
@@ -462,7 +462,7 @@ namespace Mathlib.Graphs
 		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.json {folder} true");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.graph {folder} true");
 		}
 
 		public static Graph Read(string fileName)
