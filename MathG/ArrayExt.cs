@@ -51,8 +51,10 @@ namespace Mathlib.Arrays
 		/// <returns></returns>
 		public static T[] Union<T>(this T[] A, T[] B)
 		{
-			if (A == null || B == null)
-				throw new NullReferenceException();
+			if (A == null)
+				return B;
+			if (B == null)
+				return A;
 
 			List<T> c = new List<T>();
 			for (int x = 0; x < A.Length; x++)
@@ -62,14 +64,6 @@ namespace Mathlib.Arrays
 				if (!c.Contains(B[y]))
 					c.Add(B[y]);
 			}
-
-			//int length = A.Length + B.Length;
-			//T[] c = new T[length];
-
-			//for (int x = 0; x < A.Length; x++)
-			//	c[x] = A[x];
-			//for (int y = 0; y < B.Length; y++)
-			//	c[y + A.Length] = B[y];
 
 			return c.ToArray();
 		}
@@ -81,7 +75,7 @@ namespace Mathlib.Arrays
 		public static T[] Intersect<T>(this T[] A, T[] B)
 		{
 			if (A == null || B == null)
-				throw new NullReferenceException();
+				return new T[0];
 
 			List<T> c = new List<T>();
 			T[] smaller = A.Length <= B.Length ? A : B;
