@@ -13,12 +13,10 @@ def id_to_alpha(id):
 		remainder = index % 26
 		chars.append(chr(remainder + alpha_type))
 		index = int(index / 26)
-		if index < 26:
-			index = index - 1
 	chars.append(chr(index + alpha_type))
 
 	# Due to the lack of the Stack data structure, a list is used but is read last-to-first.
-	for i in range (len(chars)):
+	for i in range(len(chars)):
 		name = name + chars[len(chars) - (i + 1)]
 
 	return name

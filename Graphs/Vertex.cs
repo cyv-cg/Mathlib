@@ -29,6 +29,15 @@ namespace Mathlib.Graphs
 		{
 			Id = id;
 		}
+		public Vertex(string id) : this(StrToID(id)) { }
+
+		public Vertex(int id, double xPos, double yPos) : this(id)
+		{
+			SetProp<double>(POS_X, xPos);
+			SetProp<double>(POS_Y, yPos);
+		}
+		public Vertex(string id, double xPos, double yPos) : this(StrToID(id), xPos, yPos) { }
+
 		internal Vertex(VertexSerializationData data)
 		{
 			Id = data.Id;
@@ -81,8 +90,6 @@ namespace Mathlib.Graphs
 				int remainder = index % 26;
 				chars.Push((char)(remainder + 65));
 				index /= 26;
-				if (index < 26)
-					index--;
 			}
 			chars.Push((char)(index + 65));
 
@@ -92,6 +99,14 @@ namespace Mathlib.Graphs
 			}
 
 			return name;
+		}
+		public static int StrToID(string id)
+		{
+			id = id.ToUpper();
+			int value = 0;
+			for (int i = id.Length - 1; i >= 0; i--)
+				value += (id[i] - 65) * (int)Math.Pow(26, id.Length - 1 - i);
+			return value;
 		}
 
 		public override string ToString()

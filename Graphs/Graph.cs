@@ -100,6 +100,11 @@ namespace Mathlib.Graphs
 			AdjList.Add(v, new List<Vertex>());
 			Vertices.Add(v);
 		}
+		public void AddVertices(Vertex[] verts)
+		{
+			foreach (Vertex v in verts)
+				AddVertex(v);
+		}
 		public void AddEdge(Edge e)
 		{
 			if (GetEdge(e.Initial, e.Terminal) != null)
@@ -112,6 +117,11 @@ namespace Mathlib.Graphs
 			if (!Directed)
 				AdjList[e.Terminal].Add(e.Initial);
 			Edges.Add(e);
+		}
+		public void AddEdges(Edge[] edges)
+		{
+			foreach (Edge e in edges)
+				AddEdge(e);
 		}
 
 		public void RemoveVertex(Vertex v)
