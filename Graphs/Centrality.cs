@@ -101,8 +101,11 @@ namespace Mathlib.Graphs
 				}
 			}
 
-			v.SetProp(CLOSENESS, 1d / centrality);
-			return 1d / centrality;
+			if (centrality > 0)
+				v.SetProp(CLOSENESS, 1d / centrality);
+			else
+				v.SetProp(CLOSENESS, 0.0);
+			return v.GetProp<double>(CLOSENESS);
 		}
 
 		public static int RadiusOfCentrality(this Graph G, Vertex v, string measure = HARMONIC)
