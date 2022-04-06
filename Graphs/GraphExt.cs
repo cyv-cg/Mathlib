@@ -230,12 +230,14 @@ namespace Mathlib.Graphs
 		/// <param name="max">Maximum x/y coordinate where vertices are places.</param>
 		/// <param name="resolution">Intended size of the output image.</param>
 		/// <returns></returns>
-		public static Graph RandomGraph(int vertices, double edgeDensityPercent = 0.5, double min = -5, double max = 5)
+		public static Graph RandomGraph(int vertices, double edgeDensityPercent = 0.5, double min = -5, double max = 5, int seed = -1)
 		{
 			// Choose a radius around each vertex where other vertices are prohibitied from being placed. (if possible).
 			double radius = 0.35d;
 			// Create a new random object to handle the random number generation.
-			Random rand = new Random();
+            if (seed == -1)
+                seed = Environment.TickCount;
+			Random rand = new Random(seed);
 
 			// Initialize an array of vertices to store each generated vertex.
 			Vertex[] verts = new Vertex[vertices];
@@ -296,16 +298,19 @@ namespace Mathlib.Graphs
 			// Only do this if the edge density is less than one, meaning not every edge will be kept.
 			if (edgeDensityPercent < 1)
 			{
-				Random r = new Random();
 				for (int i = G.Edges.Count - 1; i >= 0; i--)
 				{
-					double next = r.NextDouble();
+					double next = rand.NextDouble();
 					if (next < 1d - edgeDensityPercent)
 						G.RemoveEdge(G.Edges[i]);
 				}
 			}
 			// Now we have a visually appealing random graph!
 			return G;
+		}
+		public static Graph RandomGraph(RandomGraphParameters p)
+		{
+			return RandomGraph(p.vertices, p.edgeDensityPercent, p.min, p.max, p.seed);
 		}
 
 		public static Graph Grid(Graph G)
@@ -331,6 +336,24 @@ namespace Mathlib.Graphs
 			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.y, 0));
 
 			return new Graph(new Vertex[] { A, B, C, D }, new Edge[] { new Edge(A, B), new Edge(C, D) }, "Grid", false, false);
+		}
+	}
+    
+    public struct RandomGraphParameters
+	{
+		public int vertices;
+		public double edgeDensityPercent;
+		public double min;
+		public double max;
+		public int seed;
+
+		public RandomGraphParameters(int vertices, double edgeDensityPercent, double min, double max, int seed)
+		{
+			this.vertices = vertices;
+			this.edgeDensityPercent = edgeDensityPercent;
+			this.min = min;
+			this.max = max;
+			this.seed = seed;
 		}
 	}
 
