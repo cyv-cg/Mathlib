@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Mathlib.Sys
 {
@@ -62,7 +63,12 @@ namespace Mathlib.Sys
 		{
 			// If the bar has been drawn before, clear the line it's on so it can be redrawn in the same place.
 			if (!firstPass)
-				Commands.ClearLastLine();
+			{
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					Commands.ClearLastLine();
+				}
+			}
 			// Note that the bar has been drawn before.
 			else
 			{

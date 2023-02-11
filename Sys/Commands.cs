@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.IO;
 
@@ -9,7 +10,7 @@ namespace Mathlib.Sys
 		public static string Path { get { return AppDomain.CurrentDomain.BaseDirectory; } }
 		public static string RootFolder { get
 			{
-				string[] directories = Path.Split('\\');
+				string[] directories = Path.Split('/');
 				string root = "";
 				foreach (string s in directories)
 				{
@@ -30,32 +31,71 @@ namespace Mathlib.Sys
 		{
 			try
 			{
-				// Create a batch file in the exe directory, given a unique file name.
-				// This file will contains all given commands to be executed in order.
-				string batFileName = Path + @"\" + Guid.NewGuid() + ".bat";
-				// Write each given command to the batch.
-				using (StreamWriter batFile = new StreamWriter(batFileName))
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
-					foreach (string s in commands)
-						batFile.WriteLine(s);
+					// Create a batch file in the exe directory, given a unique file name.
+					// This file will contains all given commands to be executed in order.
+					string batFileName = Path + @"\" + Guid.NewGuid() + ".bat";
+					// Write each given command to the batch.
+					using (StreamWriter batFile = new StreamWriter(batFileName))
+					{
+						foreach (string s in commands)
+							batFile.WriteLine(s);
+					}
+
+					// Create the start info for the command line process, referencing the batch file instead of a single command.
+					ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c" + batFileName)
+					{
+						CreateNoWindow = true,
+						UseShellExecute = false,
+						RedirectStandardOutput = true
+					};
+					// Start the process, executing each command in the batch file.
+					Process process = Process.Start(processInfo);
+
+					process.WaitForExit();
+					// Once the process has finished, delete the batch file.
+					File.Delete(batFileName);
+
+					// Return the cmd output of the commands.
+					return process.StandardOutput;
 				}
-
-				// Create the start info for the command line process, referencing the batch file instead of a single command.
-				ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c" + batFileName)
+				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 				{
-					CreateNoWindow = true,
-					UseShellExecute = false,
-					RedirectStandardOutput = true
-				};
-				// Start the process, executing each command in the batch file.
-				Process process = Process.Start(processInfo);
+					// Create a shell file in the application directory, given a unique file name.
+					// This file will contains all given commands to be executed in order.
+					string bashFileName = Path + Guid.NewGuid() + ".sh";
+					// Write each given command to the batch.
+					using (StreamWriter bashFile = new StreamWriter(bashFileName))
+					{
+						foreach (string s in commands)
+							bashFile.WriteLine(s);
+					}
 
-				process.WaitForExit();
-				// Once the process has finished, delete the batch file.
-				File.Delete(batFileName);
 
-				// Return the cmd output of the commands.
-				return process.StandardOutput;
+					// Create the start info for the command line process, referencing the bash file instead of a single command.
+					ProcessStartInfo startInfo = new ProcessStartInfo() 
+					{ 
+						FileName = "/bin/bash", 
+						Arguments = $"{bashFileName}",
+        				RedirectStandardOutput = true
+					}; 
+					// Start the process, executing each command in the batch file.
+					Process process = Process.Start(startInfo);
+
+					StreamReader output = process.StandardOutput;
+
+					process.WaitForExit();
+					// Once the process has finished, delete the bash file.
+					File.Delete(bashFileName);
+
+					// Return the cmd output of the commands.
+					return process.StandardOutput;
+				}
+				else
+				{
+					throw new NotSupportedException("Unsupported OS");
+				}
 			}
 			catch (Exception e)
 			{

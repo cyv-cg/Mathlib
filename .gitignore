@@ -2,6 +2,7 @@ scripts/__pycache__/
 _outputs/
 bin/
 obj/
+.vscode/
 Program.cs
 *.pyc
 *.csproj

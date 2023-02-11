@@ -5,6 +5,7 @@ using System;
 
 using Mathlib.Arrays;
 using Mathlib.Sys;
+using System.Runtime.InteropServices;
 
 namespace Mathlib.Graphs
 {
@@ -447,10 +448,34 @@ namespace Mathlib.Graphs
 		{
 			fileName = path + "/" + Name.Replace(" ", "_") + ".graph";
 
+			if (!Directory.Exists(path))
+			{
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				{
+					Commands.Cmd($"mkdir {path}");
+				}
+				else
+				{
+					throw new NotSupportedException("Unsupported OS");
+				}
+			}
+
 			if (!File.Exists(fileName))
 			{
-				using StreamWriter writer = File.CreateText(fileName);
-				writer.WriteLine(JSON(vertexProps, edgeProps));
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					using StreamWriter writer = File.CreateText(fileName);
+					writer.WriteLine(JSON(vertexProps, edgeProps));
+				}
+				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				{
+					Commands.Cmd($"touch {fileName}");
+					File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
+				}
+				else
+				{
+					throw new NotSupportedException("Unsupported OS");
+				}
 			}
 			else
 			{
@@ -462,7 +487,7 @@ namespace Mathlib.Graphs
 		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.graph {folder} true");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.graph {folder} true");
 		}
 
 		public static Graph Read(string fileName)
