@@ -52,7 +52,7 @@ namespace Mathlib.MathG
 				{
 					Vector col = new Vector(B.M);
 					for (int k = 0; k < B.M; k++)
-						col.Set(k, B.Get(j, k));
+						col.Set(k, B.Get(k, j));
 
 					result.Set(i, j, row.Dot(col));
 				}

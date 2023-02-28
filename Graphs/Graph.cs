@@ -84,6 +84,14 @@ namespace Mathlib.Graphs
 		#region Mutators
 		public void AddVertex(Vertex v)
 		{
+			foreach (Vertex vert in Vertices)
+			{
+				if (vert.Id == v.Id)
+				{
+					//v.ChangeId(v.Id + 1);
+					v.ChangeId(this.NextAvailID());
+				}
+			}
 			if (AdjList.ContainsKey(v))
 			{
 				throw new ArgumentException($"{Name} already contains vertex with ID '{v.Id}.'");
@@ -487,7 +495,7 @@ namespace Mathlib.Graphs
 		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} _outputs/{Name.Replace(' ', '_')}.graph {folder} true");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} true");
 		}
 
 		public static Graph Read(string fileName)

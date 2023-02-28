@@ -16,6 +16,34 @@ namespace Mathlib.Graphs
 			return new IncidenceData(e).endpoints;
 		}
 
+		/// <summary>
+		/// Rotates a graph counterclockwise by theta radians.
+		/// </summary>
+		/// <param name="G">The graph to rotate.</param>
+		/// <param name="theta">Angle (radians).</param>
+		/// <param name="origin">The point around which to rotate.</param>
+		/// <returns></returns> 
+		public static void RotateGraph(Graph G, double theta, Vector2 origin = null)
+		{
+			if (origin == null)
+				origin = new Vector2(0, 0);
+
+			double c = Math.Cos(theta);
+			double s = Math.Sin(theta);
+
+			foreach (Vertex v in G.Vertices)
+			{
+				double x = v.Position.x - origin.x;
+				double y = v.Position.y - origin.y;
+
+				double x_prime = c*x - s*y + origin.x;
+				double y_prime = s*x + c*y + origin.y;
+
+				v.SetProp(Vertex.POS_X, x_prime);
+				v.SetProp(Vertex.POS_Y, y_prime);
+			}
+		}
+
 		public static Matrix AdjMat(this Graph G)
 		{
 			int V = G.Vertices.Count;
@@ -169,8 +197,31 @@ namespace Mathlib.Graphs
 			return triangulation;
 		}
 
+		public static int NextAvailID(this Graph G)
+		{
+			int id = -1;
+			foreach (Vertex v in G.Vertices)
+			{
+				if (v.Id >= id)
+				id = v.Id + 1;
+			}
+			return id;
+		}
+
 		public static Graph Union(params Graph[] graphs)
 		{
+			//Graph G = new Graph(new Vertex[0], new Edge[0]);
+
+			//foreach (Graph H in graphs)
+			//{
+			//	foreach (Vertex v in H.Vertices)
+			//		G.AddVertex(v);
+			//	foreach (Edge e in H.Edges)
+			//		G.AddEdge(e);
+			//}
+			
+			//return G;
+
 			Vertex[] verts = new Vertex[0];
 			Edge[] edges = new Edge[0];
 			int numVerts = 0;
@@ -219,6 +270,61 @@ namespace Mathlib.Graphs
 			}
 			// Once these properties are set, it is as simple as creating any other graph.
 			return new Graph(verts, edges, name, directed);
+		}
+
+		/// <summary>
+		/// Create a graph with one vertex at the center, connected to a specified number of other vertices aranged between certain angles.
+		/// </summary>
+		/// <param name="center">The existing vertex around which to base the wheel.</param>
+		/// <param name="numVerts">The number of vertices in the wheel.</param>
+		/// <param name="angleMin">The angle (radians) where the wheel starts.</param>
+		/// <param name="angleMax">The angle (radians) where the wheel ends.</param>
+		/// <param name="radius">The radius of the wheel.</param>
+		/// <returns></returns>
+		public static Graph Wheel(Vertex center, int numVerts, double angleMin = 0, double angleMax = 2 * Math.PI, double radius = 1)
+		{
+			List<Edge> edges = new List<Edge>();
+			Vertex[] vertices = new Vertex[numVerts + 1];
+			vertices[0] = center;
+			for (int i = 1; i < numVerts + 1; i++)
+			{
+				double t = (double)(i - 1) / (numVerts - 1);
+				double theta = angleMin + t * (angleMax - angleMin);
+
+				Vertex v = new Vertex(i - 1, center.Position.x + Math.Cos(theta) * radius, center.Position.y + Math.Sin(theta) * radius);
+				edges.Add(new Edge(center, v));
+				vertices[i] = v;
+			}
+
+			Graph G = new Graph(vertices, edges.ToArray());
+			return G;
+		}
+
+		/// <summary>
+		/// Create a graph with a line structure.
+		/// </summary>
+		/// <param name="start">The coordinates of the first vertex of the line.</param>
+		/// <param name="end">The coordinates of the last vertex of the line.</param>
+		/// <param name="numVerts">The number of vertices in the line.</param>
+		/// <returns></returns>
+		public static Graph Line(Vector2 start, Vector2 end, int numVerts)
+		{
+			Vertex[] vertices = new Vertex[numVerts];
+			List<Edge> edges = new List<Edge>();
+			for (int i = 0; i < vertices.Length; i++)
+			{
+				double t = (double)i / (numVerts - 1);
+				Vector2 pos = start + t * (end - start);
+
+				Vertex v = new Vertex(i, pos.x, pos.y);
+				vertices[i] = v;
+
+				if (i > 0)
+					edges.Add(new Edge(vertices[i - 1], v));
+			}
+
+			Graph G = new Graph(vertices, edges.ToArray());
+			return G;
 		}
 
 		/// <summary>
