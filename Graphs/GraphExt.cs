@@ -46,7 +46,7 @@ namespace Mathlib.Graphs
 
 		public static Matrix AdjMat(this Graph G)
 		{
-			int V = G.Vertices.Count;
+			int V = G.Vertices.Length;
 			Matrix adj = new Matrix(V, V);
 
 			foreach (Edge e in G.Edges)
@@ -64,8 +64,8 @@ namespace Mathlib.Graphs
 			if (gradient == null)
 				gradient = Gradient.Rainbow;
 
-			double minValue = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), doubleProp).GetProp<double>(doubleProp);
-			double maxValue = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), doubleProp).GetProp<double>(doubleProp);
+			double minValue = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices, doubleProp).GetProp<double>(doubleProp);
+			double maxValue = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices, doubleProp).GetProp<double>(doubleProp);
 			foreach (Vertex v in G.Vertices)
 			{
 				double percent = scale switch
@@ -81,7 +81,7 @@ namespace Mathlib.Graphs
 			if (gradient == null)
 				gradient = Gradient.Rainbow;
 
-			int maxValue = PropertyHolder.ItemWithMaxProp<int, Vertex>(G.Vertices.ToArray(), intProp).GetProp<int>(intProp);
+			int maxValue = PropertyHolder.ItemWithMaxProp<int, Vertex>(G.Vertices, intProp).GetProp<int>(intProp);
 			foreach (Vertex v in G.Vertices)
 			{
 				double percent = Math.Abs(v.GetProp<int>(intProp) / (double)maxValue);
@@ -134,10 +134,10 @@ namespace Mathlib.Graphs
 			Graph triangulation = GraphExt.Union(G, superTriangle);
 			triangulation.Rename("Triangulation");
 
-			LoadingBar bar = new LoadingBar("Triangulating", G.Vertices.Count);
+			LoadingBar bar = new LoadingBar("Triangulating", G.Vertices.Length);
 
 			// Add all points one at a time to the triangulation.
-			for (int i = 0; i < G.Vertices.Count; i++)
+			for (int i = 0; i < G.Vertices.Length; i++)
 			{
 				bar.Progress = i + 1;
 
@@ -230,9 +230,9 @@ namespace Mathlib.Graphs
 			{
 				foreach (Vertex v in H.Vertices)
 					v.ChangeId(v.Id + numVerts);
-				numVerts += H.Vertices.Count;
-				verts = verts.Union(H.Vertices.ToArray());
-				edges = edges.Union(H.Edges.ToArray());
+				numVerts += H.Vertices.Length;
+				verts = verts.Union(H.Vertices);
+				edges = edges.Union(H.Edges);
 			}
 			return new Graph(verts, edges);
 		}
@@ -404,7 +404,7 @@ namespace Mathlib.Graphs
 			// Only do this if the edge density is less than one, meaning not every edge will be kept.
 			if (edgeDensityPercent < 1)
 			{
-				for (int i = G.Edges.Count - 1; i >= 0; i--)
+				for (int i = G.Edges.Length - 1; i >= 0; i--)
 				{
 					double next = rand.NextDouble();
 					if (next < 1d - edgeDensityPercent)
@@ -421,10 +421,10 @@ namespace Mathlib.Graphs
 
 		public static Graph Grid(Graph G)
 		{
-			Vertex leftmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
-			Vertex rightmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_X);
-			Vertex downmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
-			Vertex upmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices.ToArray(), Vertex.POS_Y);
+			Vertex leftmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices, Vertex.POS_X);
+			Vertex rightmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices, Vertex.POS_X);
+			Vertex downmost = PropertyHolder.ItemWithMinProp<double, Vertex>(G.Vertices, Vertex.POS_Y);
+			Vertex upmost = PropertyHolder.ItemWithMaxProp<double, Vertex>(G.Vertices, Vertex.POS_Y);
 
 			Vertex A = new Vertex(0);
 			Vertex B = new Vertex(1);

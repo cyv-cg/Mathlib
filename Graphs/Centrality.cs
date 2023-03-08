@@ -156,7 +156,7 @@ namespace Mathlib.Graphs
 				}
 
 				// Determine if v is still the most central vertex in G_n.
-				isMostCental = PropertyHolder.ItemWithMaxProp<double, Vertex>(G_n.Vertices.ToArray(), measure).GetProp<double>(measure)
+				isMostCental = PropertyHolder.ItemWithMaxProp<double, Vertex>(G_n.Vertices, measure).GetProp<double>(measure)
 					<= v.GetProp<double>(measure);
 				// If v is the most central, increment its radius.
 				if (isMostCental)
@@ -165,7 +165,7 @@ namespace Mathlib.Graphs
 			// Continue while v is the most central vertex in its graph,
 			// and also while the subgraph with radius n has fewer vertices than the subgraph with radius n+1.
 			// This condition implies that the graph has not reached its maximum radius, and there is still more to check.
-			while (isMostCental && G_0.Vertices.Count < G_n.Vertices.Count);
+			while (isMostCental && G_0.Vertices.Length < G_n.Vertices.Length);
 
 			// At this point, if "isMostCentral" is true, that means v is the most central vertex in the whole graph
 			// (or rather, it's connected component.)
@@ -184,7 +184,7 @@ namespace Mathlib.Graphs
 		}
 		public static void RadiusOfCentrality(this Graph G, string measure = HARMONIC)
 		{
-			LoadingBar bar = new LoadingBar("Finding radii of centrality", G.Vertices.Count);
+			LoadingBar bar = new LoadingBar("Finding radii of centrality", G.Vertices.Length);
 			foreach (Vertex v in G.Vertices)
 			{
 				G.RadiusOfCentrality(v, measure);

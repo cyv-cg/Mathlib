@@ -48,10 +48,6 @@ namespace Mathlib
 			}
 		}
 
-		public static TItem ItemWithMinProp<TValue, TItem>(List<TItem> items, string property) where TValue : IComparable where TItem : PropertyHolder
-		{
-			return ItemWithMinProp<TValue, TItem>(items.ToArray(), property);
-		}
 		public static TItem ItemWithMinProp<TValue, TItem>(TItem[] items, string property) where TValue : IComparable where TItem : PropertyHolder
 		{
 			try
@@ -71,10 +67,6 @@ namespace Mathlib
 			}
 		}
 
-		public static TItem ItemWithMaxProp<TValue, TItem>(List<TItem> items, string property) where TValue : IComparable where TItem : PropertyHolder
-		{
-			return ItemWithMaxProp<TValue, TItem>(items.ToArray(), property);
-		}
 		public static TItem ItemWithMaxProp<TValue, TItem>(TItem[] items, string property) where TValue : IComparable where TItem : PropertyHolder
 		{
 			try

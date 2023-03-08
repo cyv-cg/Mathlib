@@ -17,8 +17,11 @@ namespace Mathlib.Graphs
 		public bool Directed { get; protected set; }
 		public bool Weighted { get; protected set; }
 
-		public List<Vertex> Vertices { get; private set; }
-		public List<Edge> Edges { get; private set; }
+		private List<Vertex> _Vertices { get; set; }
+		public Vertex[] Vertices {get {return _Vertices.ToArray();}}
+
+		private List<Edge> _Edges { get; set; }
+		public Edge[] Edges { get {return _Edges.ToArray();} }
 
 		public Dictionary<Vertex, List<Vertex>> AdjList { get; protected set; }
 
@@ -28,8 +31,8 @@ namespace Mathlib.Graphs
 		public Graph() 
 		{
 			Name = "New Graph";
-			Vertices = new List<Vertex>();
-			Edges = new List<Edge>();
+			_Vertices = new List<Vertex>();
+			_Edges = new List<Edge>();
 			AdjList = new Dictionary<Vertex, List<Vertex>>();
 			Directed = false;
 			Weighted = false;
@@ -41,8 +44,8 @@ namespace Mathlib.Graphs
 			Directed = directed;
 			Weighted = weighted;
 
-			Vertices = new List<Vertex>();
-			Edges = new List<Edge>();
+			_Vertices = new List<Vertex>();
+			_Edges = new List<Edge>();
 			AdjList = new Dictionary<Vertex, List<Vertex>>();
 
 			foreach (Vertex v in vertices)
@@ -64,7 +67,7 @@ namespace Mathlib.Graphs
 
 		public Vertex GetVertex(int id)
 		{
-			foreach (Vertex v in Vertices)
+			foreach (Vertex v in _Vertices)
 			{
 				if (v.Id == id)
 					return v;
@@ -73,7 +76,7 @@ namespace Mathlib.Graphs
 		}
 		public Edge GetEdge(Vertex initial, Vertex terminal)
 		{
-			foreach (Edge e in Edges)
+			foreach (Edge e in _Edges)
 			{
 				if ((e.Initial == initial && e.Terminal == terminal) || (e.Initial == terminal && e.Terminal == initial && !Directed))
 					return e;
@@ -84,7 +87,7 @@ namespace Mathlib.Graphs
 		#region Mutators
 		public void AddVertex(Vertex v)
 		{
-			foreach (Vertex vert in Vertices)
+			foreach (Vertex vert in _Vertices)
 			{
 				if (vert.Id == v.Id)
 				{
@@ -99,7 +102,7 @@ namespace Mathlib.Graphs
 				throw new ArgumentNullException($"Vertex cannot be null.");
 
 			AdjList.Add(v, new List<Vertex>());
-			Vertices.Add(v);
+			_Vertices.Add(v);
 		}
 		public void AddVertices(Vertex[] verts)
 		{
@@ -117,7 +120,7 @@ namespace Mathlib.Graphs
 			AdjList[e.Initial].Add(e.Terminal);
 			if (!Directed)
 				AdjList[e.Terminal].Add(e.Initial);
-			Edges.Add(e);
+			_Edges.Add(e);
 		}
 		public void AddEdges(Edge[] edges)
 		{
@@ -130,15 +133,15 @@ namespace Mathlib.Graphs
 			if (v == null)
 				throw new ArgumentNullException($"Vertex cannot be null.");
 
-			if (Vertices.Contains(v))
+			if (_Vertices.Contains(v))
 			{
-				for (int i = Edges.Count - 1; i >= 0; i--)
+				for (int i = _Edges.Count - 1; i >= 0; i--)
 				{
-					if (Edges[i].Initial == v || Edges[i].Terminal == v)
-						RemoveEdge(Edges[i]);
+					if (_Edges[i].Initial == v || _Edges[i].Terminal == v)
+						RemoveEdge(_Edges[i]);
 				}
 				AdjList.Remove(v);
-				Vertices.Remove(v);
+				_Vertices.Remove(v);
 			}
 		}
 		public void RemoveEdge(Edge e)
@@ -146,12 +149,12 @@ namespace Mathlib.Graphs
 			if (e == null)
 				throw new ArgumentNullException($"Edge cannot be null.");
 
-			if (Edges.Contains(e))
+			if (_Edges.Contains(e))
 			{
 				AdjList[e.Initial].Remove(e.Terminal);
 				if (!Directed)
 					AdjList[e.Terminal].Remove(e.Initial);
-				Edges.Remove(e);
+				_Edges.Remove(e);
 			}
 		}
 
@@ -182,7 +185,7 @@ namespace Mathlib.Graphs
 		public Graph InducedSubgraph(Vertex source, int radius)
 		{
 			// Initialize relevant properties to the default value.
-			foreach (Vertex v in Vertices)
+			foreach (Vertex v in _Vertices)
 			{
 				v.SetProp("radius", int.MaxValue);
 				v.SetProp("isInfiniteRadius", true);
@@ -243,7 +246,7 @@ namespace Mathlib.Graphs
 			// Initialize a new list of vertices.
 			List<Vertex> Q = new List<Vertex>();
 			// Initialize properties for each vertex in the graph.
-			foreach (Vertex v in Vertices)
+			foreach (Vertex v in _Vertices)
 			{
 				// For principle, set the distance as high as it can get.
 				v.SetProp("distance", double.MaxValue);
@@ -326,7 +329,7 @@ namespace Mathlib.Graphs
 			// Initialize a new queue of vertices.
 			Queue<Vertex> Q = new Queue<Vertex>();
 			// Initialize properties for each vertex in the graph.
-			foreach (Vertex v in Vertices)
+			foreach (Vertex v in _Vertices)
 			{
 				// Default every vertex to be undiscovered.
 				v.SetProp("state", "undiscovered");
@@ -412,15 +415,15 @@ namespace Mathlib.Graphs
 			for (int r = 0; r < AdjList.Count; r++)
 			{
 				// Start each row with the corresponding vertex pointing to its neighbors.
-				graph += $"{Vertices[r]} -> ";
+				graph += $"{_Vertices[r]} -> ";
 				// Loop through all the vertices adjacent to this vertex.
-				Vertex[] adjacency = Neighbors(Vertices[r]);
+				Vertex[] adjacency = Neighbors(_Vertices[r]);
 				for (int c = 0; c < adjacency.Length; c++)
 				{
 					// Add it to the string.
 					graph += $"{adjacency[c]}";
 					// Find the edge connecting these vertices.
-					Edge RC = GetEdge(Vertices[r], adjacency[c]);
+					Edge RC = GetEdge(_Vertices[r], adjacency[c]);
 					// If the edge has a weight, print it as well.
 					if (Weighted && RC.HasProp(Edge.WEIGHT))
 						graph += $"({RC.GetProp<double>(Edge.WEIGHT)})";
@@ -537,9 +540,9 @@ namespace Mathlib.Graphs
 				if (!Weighted && edgeProps != null)
 					edgeProps = edgeProps.Difference(new string[] { Edge.WEIGHT });
 
-				foreach (Vertex v in G.Vertices)
+				foreach (Vertex v in G._Vertices)
 					Vertices.Add(new Vertex.VertexSerializationData(v, vertexProps));
-				foreach (Edge e in G.Edges)
+				foreach (Edge e in G._Edges)
 					Edges.Add(new Edge.EdgeSerializationData(e, edgeProps));
 			}
 

@@ -24,7 +24,7 @@ namespace Mathlib
 				g_prev = g;
 				g = G.InducedSubgraph(center, radius);
 
-				if (g_prev != null && g.Vertices.Count == g_prev.Vertices.Count)
+				if (g_prev != null && g.Vertices.Length == g_prev.Vertices.Length)
 					break;
 
 
@@ -32,7 +32,7 @@ namespace Mathlib
 				radius++;
 
 
-				Graph graph = G.Vertices.Count < 1000 ? g : branch;
+				Graph graph = G.Vertices.Length < 1000 ? g : branch;
 				//Graph graph = g;
 
 
@@ -49,7 +49,7 @@ namespace Mathlib
 				graph.ColorByPropDouble(Centrality.CLOSENESS, MathG.Colors.Gradient.Rainbow, true);
 
 				//double minVal = PropertyHolder.ItemWithMinProp<double, Vertex>(graph.Vertices.ToArray(), Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
-				double maxVal = PropertyHolder.ItemWithMaxProp<double, Vertex>(graph.Vertices.ToArray(), Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
+				double maxVal = PropertyHolder.ItemWithMaxProp<double, Vertex>(graph.Vertices, Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
 
 				foreach (Vertex vert in g.Vertices)
 				{
@@ -68,7 +68,7 @@ namespace Mathlib
 
 				g.SaveOut($"{folder}/{G.Name}", 1024, new string[] {Vertex.COLOR, Centrality.CLOSENESS, "hideName"});
 			}
-			while (g_prev == null || g.Vertices.Count != g_prev.Vertices.Count);
+			while (g_prev == null || g.Vertices.Length != g_prev.Vertices.Length);
 		}
 
 		public static Graph FulcrumTree(byte k)
@@ -87,11 +87,11 @@ namespace Mathlib
 				// This line makes the branch.
 				Graph w = GraphExt.Line(new Vector2(-1, 0), new Vector2(-n, 0), n);
 				// This line creates the vertices sprouting from the end of the branch.
-				Graph u = GraphExt.Wheel(new Vertex(0, w.Vertices[w.Vertices.Count - 1].Position.x - 1, w.Vertices[w.Vertices.Count - 1].Position.y), maxDegree - 1, Math.PI / 2, 3 * Math.PI / 2);
+				Graph u = GraphExt.Wheel(new Vertex(0, w.Vertices[w.Vertices.Length - 1].Position.x - 1, w.Vertices[w.Vertices.Length - 1].Position.y), maxDegree - 1, Math.PI / 2, 3 * Math.PI / 2);
 				// The 0th vertex of u is the one with the extra branches on it.
 				seeds1.Add(u.Vertices[0]);
 
-				edges.Add(new Edge(w.Vertices[w.Vertices.Count - 1], u.Vertices[0]));
+				edges.Add(new Edge(w.Vertices[w.Vertices.Length - 1], u.Vertices[0]));
 				w = GraphExt.Union(w, u);
 
 				// Rotate the branches so they look appealing :)
@@ -108,11 +108,11 @@ namespace Mathlib
 			Graph Z = GraphExt.Line(new Vector2(1, 0), new Vector2(n, 0), n);
 
 			// Create and cache a copy of Z.
-			branch = new Graph(Z.Vertices.ToArray(), Z.Edges.ToArray(), "Branch");
+			branch = new Graph(Z.Vertices, Z.Edges, "Branch");
 			//seeds2.Add(Z.Vertices[Z.Vertices.Count - 1]);
 
 			// This makes the extra branches all the way on the right side of the tree.
-			Z = GraphExt.Union(Z, GraphExt.Wheel(Z.Vertices[Z.Vertices.Count - 1], maxDegree - 1, 3 * Math.PI / 2, 5 * Math.PI / 2, 2));
+			Z = GraphExt.Union(Z, GraphExt.Wheel(Z.Vertices[Z.Vertices.Length - 1], maxDegree - 1, 3 * Math.PI / 2, 5 * Math.PI / 2, 2));
 
 			for (int i = 0; i < n - 1; i++)
 			{
@@ -132,9 +132,9 @@ namespace Mathlib
 			G.Rename($"G{maxDegree}");
 
 			// Save all but the left neighbor of the last vertex in the branch.
-			for (int i = 1; i < G.Neighbors(branch.Vertices[branch.Vertices.Count - 1]).Length; i++)
+			for (int i = 1; i < G.Neighbors(branch.Vertices[branch.Vertices.Length - 1]).Length; i++)
 			{
-				seeds2.Add(G.Neighbors(branch.Vertices[branch.Vertices.Count - 1])[i]);
+				seeds2.Add(G.Neighbors(branch.Vertices[branch.Vertices.Length - 1])[i]);
 			}
 
 			edges.Add(new Edge(X, Z.Vertices[0]));
@@ -170,7 +170,7 @@ namespace Mathlib
 			//	Console.WriteLine(v);
 
 			// Shift the center by n vertices before moving it back.
-			Shift(G, k, 69);
+			Shift(G, k, 12);
 
 
 			//Parallel.ForEach(G.Vertices, v => {
@@ -195,15 +195,15 @@ namespace Mathlib
 			// The number of vertices we need to add is n - branch.Vertices.Count.
 			if (n >= k)
 			{
-				int diff = n - branch.Vertices.Count;
+				int diff = n - branch.Vertices.Length;
 				foreach (Vertex v in seeds2)
 				{
 					// Move right by diff.
 					v.SetProp(Vertex.POS_X, v.Position.x + diff);
 				}
 
-				Vertex A = branch.Vertices[branch.Vertices.Count - 1];
-				Vertex B = branch.Vertices[branch.Vertices.Count - 2];
+				Vertex A = branch.Vertices[branch.Vertices.Length - 1];
+				Vertex B = branch.Vertices[branch.Vertices.Length - 2];
 
 				// Also move the rightmost vertex in branch.
 				A.SetProp(Vertex.POS_X, A.Position.x + diff);
@@ -238,8 +238,8 @@ namespace Mathlib
 
 				G.AddEdge(new Edge(B, l.Vertices[0]));
 				branch.AddEdge(new Edge(B, l.Vertices[0]));
-				G.AddEdge(new Edge(l.Vertices[l.Vertices.Count - 1], A));
-				branch.AddEdge(new Edge(l.Vertices[l.Vertices.Count - 1], A));
+				G.AddEdge(new Edge(l.Vertices[l.Vertices.Length - 1], A));
+				branch.AddEdge(new Edge(l.Vertices[l.Vertices.Length - 1], A));
 			}
 
 			// Evaluate initial closeness.
@@ -296,7 +296,7 @@ namespace Mathlib
 					// Create a new wheel of k-1 vertices off of this vertex.
 					Graph wheel = GraphExt.Wheel(v, k - 1, 19 * Math.PI / 12, 29 * Math.PI / 12, Math.Pow(2, -j));
 
-					for (int index = 1; index < wheel.Vertices.Count; index++)
+					for (int index = 1; index < wheel.Vertices.Length; index++)
 					{
 						G.AddVertex(wheel.Vertices[index]);
 						newSeeds2.Add(wheel.Vertices[index]);
@@ -382,7 +382,7 @@ namespace Mathlib
 					// Add a wheel of k-1 vertices.
 					Graph wheel = GraphExt.Wheel(v, k - 1, 7 * Math.PI / 12, 17 * Math.PI / 12, Math.Pow(2, -j));
 					// Replace seeds1 with the newly created vertices.
-					for (int index = 1; index < wheel.Vertices.Count; index++)
+					for (int index = 1; index < wheel.Vertices.Length; index++)
 					{
 						G.AddVertex(wheel.Vertices[index]);
 						newSeeds1.Add(wheel.Vertices[index]);
