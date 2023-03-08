@@ -8,6 +8,7 @@ using Mathlib.Graphs;
 using Mathlib.Arrays;
 using Mathlib.MathG.Colors;
 using Mathlib.MathG;
+using System.Threading.Tasks;
 
 namespace Mathlib
 {
@@ -32,8 +33,12 @@ namespace Mathlib
 
 
 				Graph graph = G.Vertices.Count < 1000 ? g : branch;
+				//Graph graph = g;
 
 
+				//Parallel.ForEach(g.Vertices, vert => {
+				//	vert.SetProp(Centrality.CLOSENESS, g.Closeness(vert));
+				//});
 				foreach (Vertex vert in g.Vertices)
 				{
 					if (graph.Vertices.Contains(vert))
@@ -155,14 +160,25 @@ namespace Mathlib
 		public static void Main(string[] args)
 		{
 			// Max degree.
-			byte k = 16;
+			byte k = 4;
 			// Create a fulcrum tree with the specified max degree.
 			Graph G = FulcrumTree(k);
+
+			//foreach (Vertex v in branch.Vertices)
+			//	Console.WriteLine(v);
+			//foreach (Vertex v in seeds2)
+			//	Console.WriteLine(v);
+
 			// Shift the center by n vertices before moving it back.
-			Shift(G, k, 13);
+			Shift(G, k, 69);
+
+
+			//Parallel.ForEach(G.Vertices, v => {
+			//	Console.WriteLine($"{v}: {G.Closeness(v)}");
+			//});
 		}
 
-		public static void Shift(Graph G, byte k, int n)
+		public static void Shift(Graph G, byte k, int n, int maxIterations = 10)
 		{
 			// Remove the branches on the left seeds.
 			foreach (Vertex v in seeds1)
@@ -174,26 +190,80 @@ namespace Mathlib
 
 
 
+			// If n >= k, add additional length to the branch.
+			// We do this by shifting everything in seeds2 to the right by a certain amount.
+			// The number of vertices we need to add is n - branch.Vertices.Count.
+			if (n >= k)
+			{
+				int diff = n - branch.Vertices.Count;
+				foreach (Vertex v in seeds2)
+				{
+					// Move right by diff.
+					v.SetProp(Vertex.POS_X, v.Position.x + diff);
+				}
+
+				Vertex A = branch.Vertices[branch.Vertices.Count - 1];
+				Vertex B = branch.Vertices[branch.Vertices.Count - 2];
+
+				// Also move the rightmost vertex in branch.
+				A.SetProp(Vertex.POS_X, A.Position.x + diff);
+			
+				// Sever edge.
+				G.RemoveEdge(G.GetEdge(A, B));
+
+				// Add additional vertices.
+				Graph l = GraphExt.Line(new Vector2(B.Position.x + 1, 0), new Vector2(A.Position.x - 1, 0), diff);
+
+				foreach (Vertex v in l.Vertices)
+				{
+					G.AddVertex(v);
+					branch.AddVertex(v);
+
+					// Grow the tree by the same amount in the other direction.
+					List<Vertex> newSeeds1 = new List<Vertex>();
+					foreach (Vertex s in seeds1)
+					{
+						Vertex M = new Vertex(0, s.Position.x - 1, s.Position.y);
+						G.AddVertex(M);
+						G.AddEdge(new Edge(s, M));
+						newSeeds1.Add(M);
+					}
+					seeds1 = newSeeds1;
+				}
+				foreach (Edge e in l.Edges)
+				{
+					G.AddEdge(e);
+					branch.AddEdge(e);
+				}
+
+				G.AddEdge(new Edge(B, l.Vertices[0]));
+				branch.AddEdge(new Edge(B, l.Vertices[0]));
+				G.AddEdge(new Edge(l.Vertices[l.Vertices.Count - 1], A));
+				branch.AddEdge(new Edge(l.Vertices[l.Vertices.Count - 1], A));
+			}
+
 			// Evaluate initial closeness.
 			foreach (Vertex v in G.Vertices)
 				v.SetProp(Centrality.CLOSENESS, G.Closeness(v));
 
-
-
-
-
-			// For now, clamp this so I don't have to worry about moving the center to a vertex that doesn't exist yet.
-			n = Math.Min(n, branch.Vertices.Count);
 			// Choose the vertex we want to be the center.
-			Vertex targetCenter = branch.Vertices[n - 1];
+			Vertex targetCenter = null;// = branch.Vertices[n - 1];
+			foreach (Vertex v in branch.Vertices)
+			{
+				int d = G.FindPath(G.Vertices[0], v).Count - 1;
+				if (d == n)
+				{
+					targetCenter = v;
+					break;
+				}
+			}
+
 			Vertex oldCenter = G.Vertices[0];
 			branch.AddVertex(oldCenter);
 
 
 			//G.Rename($"G{k}_{oldCenter}->{n}");
 
-
-			int maxIterations = 8;
 
 			LoadingBar bar = new LoadingBar($"Shifting center to {targetCenter}", n);
 			bar.Progress = 0;
@@ -203,7 +273,7 @@ namespace Mathlib
 
 			// As long as the center is not the target vertex, grow the tree according to my notes.
 			int j = 0;
-			while (PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS) != targetCenter)
+			while (PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS) != targetCenter)
 			{
 				List<Vertex> newSeeds1 = new List<Vertex>();
 				// Also grow from the other seeds.
@@ -244,7 +314,7 @@ namespace Mathlib
 						// Recalculate closeness since the graph was modified.
 						foreach (Vertex vert in branch.Vertices)
 							vert.SetProp(Centrality.CLOSENESS, G.Closeness(vert));
-						Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS);
+						Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS);
 						bar.Progress = G.FindPath(oldCenter, mostCentralVertex).Count - 1;
 						if (mostCentralVertex == targetCenter)
 						{
@@ -261,7 +331,7 @@ namespace Mathlib
 					foreach (Vertex vert in branch.Vertices)
 						vert.SetProp(Centrality.CLOSENESS, G.Closeness(vert));
 
-					Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS);
+					Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS);
 					// Then, check the distance from X to the current most central vertex.
 					int dist = G.FindPath(oldCenter, mostCentralVertex).Count - 1;
 					// If the distance is *less* than n, then iterate again.
@@ -303,7 +373,7 @@ namespace Mathlib
 
 			// Once the desired center is achieved, grow the tree back in the other direction so the center shifts back.
 			j = 0;
-			while (PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS) != oldCenter)
+			while (PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS) != oldCenter)
 			{
 				List<Vertex> newSeeds1 = new List<Vertex>();
 				for (int i = 0; i < seeds1.Count; i++)
@@ -327,7 +397,7 @@ namespace Mathlib
 						{
 							vert.SetProp(Centrality.CLOSENESS, G.Closeness(vert));
 						}
-						Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS);
+						Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS);
 						bar.Progress = n - (G.FindPath(oldCenter, mostCentralVertex).Count - 1);
 						if (mostCentralVertex == oldCenter)
 						{
@@ -345,7 +415,7 @@ namespace Mathlib
 					foreach (Vertex vert in branch.Vertices)
 						vert.SetProp(Centrality.CLOSENESS, G.Closeness(vert));
 
-					Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices.ToArray(), Centrality.CLOSENESS);
+					Vertex mostCentralVertex = PropertyHolder.ItemWithMaxProp<double, Vertex>(branch.Vertices, Centrality.CLOSENESS);
 					// Then, check the distance from X to the current most central vertex.
 					// If the distance is *less* than n, then iterate again.
 					if (mostCentralVertex != oldCenter && branch.Vertices.Contains(mostCentralVertex))
@@ -379,11 +449,8 @@ namespace Mathlib
 				}
 			}
 
-
 			foreach (Vertex v in G.Vertices)
 				v.SetProp<bool>("hideName", v != targetCenter && v != oldCenter);
-
-
 
 			ExportInducedSubgraphsWithClosenessColor(G, G.Vertices[0], "_outputs");
 		}

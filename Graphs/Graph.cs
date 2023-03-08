@@ -88,20 +88,12 @@ namespace Mathlib.Graphs
 			{
 				if (vert.Id == v.Id)
 				{
-					//v.ChangeId(v.Id + 1);
 					v.ChangeId(this.NextAvailID());
 				}
 			}
 			if (AdjList.ContainsKey(v))
 			{
 				throw new ArgumentException($"{Name} already contains vertex with ID '{v.Id}.'");
-				//int maxIndex = -1;
-				//foreach (Vertex u in Vertices)
-				//{
-				//	if (u.Id > maxIndex)
-				//		maxIndex = u.Id;
-				//}
-				//v.ChangeId(maxIndex + 1);
 			}
 			if (v == null)
 				throw new ArgumentNullException($"Vertex cannot be null.");
