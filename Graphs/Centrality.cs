@@ -68,7 +68,7 @@ namespace Mathlib.Graphs
 
 		// Closeness of a vertex v.
 		// Eq. 3.1 on page 229 of "Axioms for Centrality" (Boldi & Vigna)
-		public static double Closeness(this Graph G, Vertex v)
+		public static double Closeness(this Graph G, Vertex v, bool normalized = false)
 		{
 			double centrality = 0;
 
@@ -102,7 +102,7 @@ namespace Mathlib.Graphs
 			}
 
 			if (centrality > 0)
-				v.SetProp(CLOSENESS, 1d / centrality);
+				v.SetProp(CLOSENESS, (normalized ? (G.Vertices.Length - 1) : 1d) / centrality);
 			else
 				v.SetProp(CLOSENESS, 0.0);
 			return v.GetProp<double>(CLOSENESS);
