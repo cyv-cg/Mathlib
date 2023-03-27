@@ -122,12 +122,14 @@ namespace Mathlib.Graphs
 		internal struct VertexSerializationData
 		{
 			public int Id { get; set; }
+			public string Name {get; set; }
 
 			public List<KeyValuePair<string, object>> Properties { get; set; }
 
 			public VertexSerializationData(Vertex v, params string[] properties)
 			{
 				Id = v.Id;
+				Name = v.IdToAlpha();
 
 				if (properties != null && properties.Length > 0)
 				{
