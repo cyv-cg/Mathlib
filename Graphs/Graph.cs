@@ -438,6 +438,55 @@ namespace Mathlib.Graphs
 			return graph;
 		}
 
+		public void ExportAdjascencyMatrix(string path)
+		{
+			string output = "";
+			for (int i = 0; i < Vertices.Length; i++)
+			{
+				for (int j = 0; j < Vertices.Length; j++)
+					output += (AdjList[Vertices[i]].Contains(Vertices[j]) ? 1 : 0).ToString();
+				if (i != Vertices.Length - 1)
+					output += "\n";
+			}
+
+			fileName = path + "/" + Name.Replace(" ", "_") + ".adjmat";
+
+			if (!Directory.Exists(path))
+			{
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				{
+					Commands.Cmd($"mkdir {path}");
+				}
+				else
+				{
+					throw new NotSupportedException("Unsupported OS");
+				}
+			}
+
+			if (!File.Exists(fileName))
+			{
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					using StreamWriter writer = File.CreateText(fileName);
+					writer.WriteLine(output);
+				}
+				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				{
+					Commands.Cmd($"touch {fileName}");
+					File.WriteAllText(fileName, output);
+				}
+				else
+				{
+					throw new NotSupportedException("Unsupported OS");
+				}
+			}
+			else
+			{
+				File.WriteAllText(fileName, output);
+			}
+			Console.WriteLine($"Saved to {fileName}");
+		}
+
 		public string JSON(string[] vertexProps, string[] edgeProps, bool writeIndented = true)
 		{
 			JsonSerializerOptions options = new JsonSerializerOptions
