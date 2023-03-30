@@ -1,4 +1,4 @@
-#include "Closeness.h"
+#include "Closeness.hpp"
 
 // Arguments:
 // 1) path to .adjmat file
@@ -117,11 +117,12 @@ void ComputeCloseness(vector<vector<u16>> matrix, u16 size, bool normalize, stri
 		for (int i = 0; i < size; i++)
 			sumOfDistances += *(distances + i);
 		// Compute the closeness value.
-		double closeness = 1.0 / sumOfDistances;
-
+		double closeness; 
+		if (sumOfDistances > 0)
 		// Use the normalized formula, if specified.
-		if (normalize)
-			closeness *= size - 1;
+			closeness = (normalize ? size - 1.0 : 1.0) / (double)sumOfDistances;
+		else
+			closeness = (double)INT_MAX;
 
 		// Write values to a file.
 		output << std::fixed << std::setprecision(16) << closeness;

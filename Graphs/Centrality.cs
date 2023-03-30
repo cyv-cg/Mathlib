@@ -104,8 +104,27 @@ namespace Mathlib.Graphs
 			if (centrality > 0)
 				v.SetProp(CLOSENESS, (normalized ? (G.Vertices.Length - 1) : 1d) / centrality);
 			else
-				v.SetProp(CLOSENESS, 0.0);
+				v.SetProp<double>(CLOSENESS, int.MaxValue);
 			return v.GetProp<double>(CLOSENESS);
+		}
+
+		public static void ClosenessExt(Graph G, bool normalized = false, bool deleteFiles = true)
+		{
+			// Start by exporting the adjacency matrix.
+			G.ExportAdjascencyMatrix("_outputs");
+			// Run the command to compute the centrality.
+			Sys.Commands.CmdOut($"./scripts/Closeness _outputs/{G.Name}.adjmat {normalized}");
+
+			// Read computed values from the output file.
+			string[] values = System.IO.File.ReadAllLines($"_outputs/{G.Name}.closeness");
+			// Parse and assign closeness values.
+			for (int i = 0; i < values.Length; i++)
+				G.Vertices[i].SetProp<double>(Centrality.CLOSENESS, double.Parse(values[i]));
+				//G.GetVertex(i).SetProp<double>(Centrality.CLOSENESS, double.Parse(values[i]));
+
+			if (deleteFiles)
+				// Delete files now that they've been used.
+				Sys.Commands.Cmd($"rm _outputs/{G.Name}.adjmat _outputs/{G.Name}.closeness");
 		}
 
 		public static int RadiusOfCentrality(this Graph G, Vertex v, string measure = HARMONIC)

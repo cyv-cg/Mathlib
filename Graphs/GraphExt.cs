@@ -313,7 +313,7 @@ namespace Mathlib.Graphs
 			List<Edge> edges = new List<Edge>();
 			for (int i = 0; i < vertices.Length; i++)
 			{
-				double t = (double)i / (numVerts - 1);
+				double t = numVerts > 1 ? (double)i / (numVerts - 1) : 0;
 				Vector2 pos = start + t * (end - start);
 
 				Vertex v = new Vertex(i, pos.x, pos.y);
@@ -442,6 +442,56 @@ namespace Mathlib.Graphs
 			D.SetProp(Vertex.POS_Y, Math.Max(upmost.Position.y, 0));
 
 			return new Graph(new Vertex[] { A, B, C, D }, new Edge[] { new Edge(A, B), new Edge(C, D) }, "Grid", false, false);
+		}
+
+		public static void ExportInducedSubgraphsWithClosenessColor(Graph G, Vertex center, string folder, bool normalized = false, string minColor = "770077", string maxColor = "FF00FF")
+		{
+			G.SaveOut($"_outputs/{G.Name}", 1024);
+			Console.WriteLine("Exporting...");
+
+			byte radius = 0;
+			Graph g_prev = null;
+			Graph g = null;
+			do
+			{
+				g_prev = g;
+				g = G.InducedSubgraph(center, radius);
+
+				if (g_prev != null && g.Vertices.Length == g_prev.Vertices.Length)
+					break;
+
+
+				g.Rename($"{G.Name}_{center.IdToAlpha()}_{radius}");
+				radius++;
+
+
+				//Graph graph = G.Vertices.Length < 1000 ? g : branch;
+				Graph graph = g;
+
+				Centrality.ClosenessExt(g, normalized);
+				graph.ColorByPropDouble(Centrality.CLOSENESS, MathG.Colors.Gradient.Rainbow, true);
+
+				//double minVal = PropertyHolder.ItemWithMinProp<double, Vertex>(graph.Vertices.ToArray(), Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
+				double maxVal = PropertyHolder.ItemWithMaxProp<double, Vertex>(graph.Vertices, Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
+
+				foreach (Vertex vert in g.Vertices)
+				{
+					if (vert.GetProp<double>(Centrality.CLOSENESS) > 0)
+					{
+						//if (vert.GetProp<double>(Centrality.CLOSENESS) == minVal)
+						//	vert.SetProp(Vertex.COLOR, minColor);
+						if (vert.GetProp<double>(Centrality.CLOSENESS) == maxVal)
+							vert.SetProp(Vertex.COLOR, maxColor);
+					}
+					else
+					{
+						vert.SetProp(Vertex.COLOR, "FFFFFF");
+					}
+				}
+
+				g.SaveOut($"{folder}/{G.Name}", 1024, new string[] {Vertex.COLOR, Centrality.CLOSENESS, "hideName"});
+			}
+			while (g_prev == null || g.Vertices.Length != g_prev.Vertices.Length);
 		}
 	}
     
