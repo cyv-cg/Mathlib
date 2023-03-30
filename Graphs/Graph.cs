@@ -25,7 +25,7 @@ namespace Mathlib.Graphs
 
 		public Dictionary<Vertex, List<Vertex>> AdjList { get; protected set; }
 
-		private string fileName;
+		//private string fileName;
 		#endregion
 		#region Construction
 		public Graph() 
@@ -440,51 +440,35 @@ namespace Mathlib.Graphs
 
 		public void ExportAdjascencyMatrix(string path)
 		{
+			// This string will serve as the raw output for the file.
 			string output = "";
-			for (int i = 0; i < Vertices.Length; i++)
+			// Start by creating a 2D byte array with a row for every vertex.
+			// Byte is used because this will hold only either 0 or 1, so int 
+			// is an unnecessary waste of space because of how large the matrix can get.
+			byte[][] matrix = new byte[Vertices.Length][];
+
+			// Search through every vertex.
+			for (int i = 0; i < Vertices.Length; ++i)
 			{
-				for (int j = 0; j < Vertices.Length; j++)
-					output += (AdjList[Vertices[i]].Contains(Vertices[j]) ? 1 : 0).ToString();
-				if (i != Vertices.Length - 1)
-					output += "\n";
+				// Initialize another byte array of all 0.
+				matrix[i] = new byte[Vertices.Length];
+				// Only for the vertices this vertex is connected to, change to 1.
+				foreach (Vertex v in AdjList[Vertices[i]])
+					matrix[i][Vertices.IndexOf(v)] = 1;
+			}
+			for (int i = 0; i < Vertices.Length; ++i)
+			{
+				// Turn each row of the matrix into a string and append to the output stream.
+				output += string.Join("", matrix[i]);
+				// Don't put the newline at the end.
+				// Why? Purely for aesthetic reasons.
+				// I hate empty lines at the end of a file.
+				if (i < Vertices.Length - 1)
+					output += '\n';
 			}
 
-			fileName = path + "/" + Name.Replace(" ", "_") + ".adjmat";
-
-			if (!Directory.Exists(path))
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-				{
-					Commands.Cmd($"mkdir {path}");
-				}
-				else
-				{
-					throw new NotSupportedException("Unsupported OS");
-				}
-			}
-
-			if (!File.Exists(fileName))
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					using StreamWriter writer = File.CreateText(fileName);
-					writer.WriteLine(output);
-				}
-				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-				{
-					Commands.Cmd($"touch {fileName}");
-					File.WriteAllText(fileName, output);
-				}
-				else
-				{
-					throw new NotSupportedException("Unsupported OS");
-				}
-			}
-			else
-			{
-				File.WriteAllText(fileName, output);
-			}
-			Console.WriteLine($"Saved to {fileName}");
+			// Export as normal.
+			Writer.Write(path, Name.Replace(" ", "_") + ".adjmat", output, true);
 		}
 
 		public string JSON(string[] vertexProps, string[] edgeProps, bool writeIndented = true)
@@ -493,50 +477,16 @@ namespace Mathlib.Graphs
 			{
 				WriteIndented = writeIndented
 			};
-			return JsonSerializer.Serialize(new GraphSerializationData(this, vertexProps, edgeProps), options);
+			GraphSerializationData data = new GraphSerializationData(this, vertexProps, edgeProps);
+			return JsonSerializer.Serialize(data, options);
 		}
 
 		public void Save(string path, string[] vertexProps = null, string[] edgeProps = null)
 		{
-			fileName = path + "/" + Name.Replace(" ", "_") + ".graph";
-
-			if (!Directory.Exists(path))
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-				{
-					Commands.Cmd($"mkdir {path}");
-				}
-				else
-				{
-					throw new NotSupportedException("Unsupported OS");
-				}
-			}
-
-			if (!File.Exists(fileName))
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					using StreamWriter writer = File.CreateText(fileName);
-					writer.WriteLine(JSON(vertexProps, edgeProps));
-				}
-				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-				{
-					Commands.Cmd($"touch {fileName}");
-					File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
-				}
-				else
-				{
-					throw new NotSupportedException("Unsupported OS");
-				}
-			}
-			else
-			{
-				File.WriteAllText(fileName, JSON(vertexProps, edgeProps));
-			}
-			Console.WriteLine($"Saved to {fileName}");
+			Writer.Write(path, Name.Replace(" ", "_") + ".graph", JSON(vertexProps, edgeProps), true);
 		}
 
-		public void SaveOut(string folder, int resolution, string[] vertProps = null, string[] edgeProps = null)
+		public void SaveOut(string folder, int resolution = 1024, string[] vertProps = null, string[] edgeProps = null)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} true");
