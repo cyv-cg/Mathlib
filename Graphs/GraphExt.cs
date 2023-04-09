@@ -444,10 +444,10 @@ namespace Mathlib.Graphs
 			return new Graph(new Vertex[] { A, B, C, D }, new Edge[] { new Edge(A, B), new Edge(C, D) }, "Grid", false, false);
 		}
 
-		public static void ExportInducedSubgraphsWithClosenessColor(Graph G, Vertex center, string folder, bool normalized = false, string minColor = "770077", string maxColor = "FF00FF")
+		public static void ExportInducedSubgraphsWithClosenessColor(Graph G, Vertex center, string folder, bool normalized = false, Gradient gradient = null, string minColor = "FF0000", string maxColor = "FF00FF", bool svg = true, bool png = false, bool pdf = false)
 		{
-			G.SaveOut($"_outputs/{G.Name}", 1024);
-			Console.WriteLine("Exporting...");
+			if (gradient == null)
+				gradient = Gradient.Rainbow;
 
 			byte radius = 0;
 			Graph g_prev = null;
@@ -469,17 +469,17 @@ namespace Mathlib.Graphs
 				Graph graph = g;
 
 				Centrality.ClosenessExt(g, normalized);
-				graph.ColorByPropDouble(Centrality.CLOSENESS, MathG.Colors.Gradient.Rainbow, true);
+				graph.ColorByPropDouble(Centrality.CLOSENESS, gradient, true);
 
-				//double minVal = PropertyHolder.ItemWithMinProp<double, Vertex>(graph.Vertices.ToArray(), Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
+				double minVal = PropertyHolder.ItemWithMinProp<double, Vertex>(graph.Vertices, Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
 				double maxVal = PropertyHolder.ItemWithMaxProp<double, Vertex>(graph.Vertices, Centrality.CLOSENESS).GetProp<double>(Centrality.CLOSENESS);
 
 				foreach (Vertex vert in g.Vertices)
 				{
 					if (vert.GetProp<double>(Centrality.CLOSENESS) > 0)
 					{
-						//if (vert.GetProp<double>(Centrality.CLOSENESS) == minVal)
-						//	vert.SetProp(Vertex.COLOR, minColor);
+						if (vert.GetProp<double>(Centrality.CLOSENESS) == minVal)
+							vert.SetProp(Vertex.COLOR, minColor);
 						if (vert.GetProp<double>(Centrality.CLOSENESS) == maxVal)
 							vert.SetProp(Vertex.COLOR, maxColor);
 					}
@@ -489,7 +489,7 @@ namespace Mathlib.Graphs
 					}
 				}
 
-				g.SaveOut($"{folder}/{G.Name}", 1024, new string[] {Vertex.COLOR, Centrality.CLOSENESS, "hideName"});
+				g.SaveOut($"{folder}/{G.Name}", 1024, new string[] {Vertex.COLOR, Centrality.CLOSENESS, "hideName"}, null, svg, png, pdf);
 			}
 			while (g_prev == null || g.Vertices.Length != g_prev.Vertices.Length);
 		}

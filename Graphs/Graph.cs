@@ -486,10 +486,10 @@ namespace Mathlib.Graphs
 			Writer.Write(path, Name.Replace(" ", "_") + ".graph", JSON(vertexProps, edgeProps), true);
 		}
 
-		public void SaveOut(string folder, int resolution = 1024, string[] vertProps = null, string[] edgeProps = null)
+		public void SaveOut(string folder, int resolution = 1024, string[] vertProps = null, string[] edgeProps = null, bool svg = true, bool png = false, bool pdf = false)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} true");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} {svg} {png} {pdf}");
 		}
 
 		public static Graph Read(string fileName)

@@ -32,6 +32,13 @@ namespace Mathlib.MathG.Colors
 				);
 			} 
 		}
+		public static Gradient Grayscale { get {
+				return new Gradient(
+					new KeyValuePair<double, Vector3>(0.00, Colors.black),
+					new KeyValuePair<double, Vector3>(1.00, Colors.white)
+				);
+			} 
+		}
 
 		public void AddColor(double time, Vector3 color)
 		{

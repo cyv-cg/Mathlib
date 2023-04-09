@@ -14,7 +14,7 @@ namespace Mathlib.Sys
 			{
 				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 				{
-					Commands.Cmd($"mkdir {directory}");
+					Commands.Cmd($"mkdir --parents {directory}");
 				}
 				else
 				{
