@@ -11,7 +11,6 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF, renderPM
 
 # Custom utility functions.
-import scripts.id_to_alpha as id
 import scripts.get_prop as prop
 
 def normalize_positions():
@@ -200,7 +199,7 @@ try:
 	# Draw nodes.
 	for i in range(len(vertices)):
 		# Convert integer id to alpha name.
-		text = id.id_to_alpha(int(vertices[i]['Id']))
+		text = vertices[i]['Name']
 
 		# Find origin point of the node.
 		origin = (positions[vertices[i]["Id"]][0] - plot_size[1]/2, positions[vertices[i]["Id"]][1] - plot_size[0]/2)

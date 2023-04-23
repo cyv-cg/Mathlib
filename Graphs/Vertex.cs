@@ -81,22 +81,16 @@ namespace Mathlib.Graphs
 		public string IdToAlpha()
 		{
 			string name = "";
-			Stack<char> chars = new Stack<char>();
 
 			int index = Id;
 
 			while (index > 25)
 			{
-				int remainder = index % 26;
-				chars.Push((char)(remainder + 65));
-				index /= 26;
+				int digit = index / 26;
+				name += (char)(digit + 64);
+				index -= 26 * digit;
 			}
-			chars.Push((char)(index + 65));
-
-			while (chars.Count > 0)
-			{
-				name += chars.Pop();
-			}
+			name += (char)(index + 65);
 
 			return name;
 		}
@@ -104,8 +98,9 @@ namespace Mathlib.Graphs
 		{
 			id = id.ToUpper();
 			int value = 0;
-			for (int i = id.Length - 1; i >= 0; i--)
-				value += (id[i] - 65) * (int)Math.Pow(26, id.Length - 1 - i);
+			for (int i = id.Length - 2; i >= 0; i--)
+				value += (id[i] - 64) * (int)Math.Pow(26, id.Length - 1 - i);
+			value += id[id.Length - 1] - 65;
 			return value;
 		}
 

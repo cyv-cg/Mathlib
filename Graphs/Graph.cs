@@ -491,6 +491,10 @@ namespace Mathlib.Graphs
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
 			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} {svg} {png} {pdf}");
 		}
+		public void SaveOut(string folder, params string[] vertProps)
+		{
+			SaveOut(folder, 1024, vertProps, null);
+		}
 
 		public static Graph Read(string fileName)
 		{
