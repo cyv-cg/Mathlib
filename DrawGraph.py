@@ -1,14 +1,14 @@
-﻿import sys
+﻿import traceback
+import argparse
 import os
 
 import json
 import numpy as np
 
 # This is for creating and writing to the svg image.
-import drawSvg as draw
-# These are for saving the image to other file types.
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPDF, renderPM
+import drawsvg as draw
+# This is for saving the image to other file types.
+import cairosvg
 
 # Custom utility functions.
 import scripts.get_prop as prop
@@ -39,7 +39,6 @@ def get_plot_size(vertices, radius, padding, scale):
 		# Get the enumerated coordinate values in the vertex properties and adjust them for the image.
 		x = int(radius + padding + scale * float(prop.get_prop(v, 'xPos')))
 		y = int(radius + padding + scale * float(prop.get_prop(v, 'yPos')))
-		# positions.append((x, y))
 		positions.update({v["Id"]: (x,y)})
 		# Find the extreme coordinates.
 		if x < leftmost:
@@ -54,86 +53,26 @@ def get_plot_size(vertices, radius, padding, scale):
 	# Return the list of positions for each vertex, as well as the calculated size of the image.
 	return positions, (downmost - upmost + radius + padding, rightmost - leftmost + radius + padding)
 
-# Read optional arguments (if they are given)
-def get_optional_args():
-	folder = ""
-	if len(sys.argv) >= 4:
-		folder = sys.argv[3]
-	if (len(folder) > 0):
-		folder = folder + "/"
-
-	svg = True
-	png = False
-	pdf = False
-	# When checking the length of the arguments list, the integer it's compared to is increased by 1, 
-	# because the script call itself is counted as an argument.
-	if len(sys.argv) >= 5:
-		svg = sys.argv[4].lower() == "true"
-	if len(sys.argv) >= 6:
-		png = sys.argv[5].lower() == "true"
-	if len(sys.argv) >= 7:
-		pdf = sys.argv[6].lower() == "true"
-	
-	return folder, svg, png, pdf
-
 def save_file(file_name, d, save_as_svg, save_as_png, save_as_pdf):
 	# Initially save the image as a temporary svg file to be read again into a different data type.
-	d.saveSvg(f"{file_name}_temp.svg")
-
-	# Read as a svglib data type.
-	# This allows svglib to save to other file types.
-	drawing = svg2rlg(f"{file_name}_temp.svg")
+	d.save_svg(f"{file_name}_temp.svg")
 
 	# Save to file types (svg, png, pdf) if desired.
 	if save_as_svg:
-		d.saveSvg(f"{file_name}.svg")
+		d.save_svg(f"{file_name}.svg")
 		print(f"Saved to {file_name}.svg")
 	if save_as_png:
-		renderPM.drawToFile(drawing, f"{file_name}.png", fmt="PNG")
+		cairosvg.svg2png(url=f"{file_name}_temp.svg", write_to=f"{file_name}.png")
 		print(f"Saved to {file_name}.png")
 	if save_as_pdf:
-		renderPDF.drawToFile(drawing, f"{file_name}.pdf")
+		cairosvg.svg2pdf(url=f"{file_name}_temp.svg", write_to=f"{file_name}.pdf")
 		print(f"Saved to {file_name}.pdf")
-
+	
 	# Delete the temp file.
 	os.remove(f"{file_name}_temp.svg")
 
-try:
-	# This script will be passed a few arguments when called:
-	# 1: image resolution
-	# 2: JSON file of the graph
-	# 3-5: optional arguments determining what file type(s) to save as
-	resolution = int(sys.argv[1])
-	file = open(sys.argv[2], "r")
-
-	# The radius of the nodes.
-	# Calculated as a proportion of the resolution.
-	radius = int(resolution / 32)
-	# Scale of the elements. Used to adjust the size of the elements based on the image resolution.
-	scale = int(resolution / 5)
-	# Thickness of things like the stroke width. Scales with resolution.
-	element_thickness = 0.01 * scale
-	# Extra space around the border of the image.
-	# Adds white space between the edge of the nodes and the outside of the image.
-	padding = 32 * element_thickness
-
-	# Load JSON data from the given file.
-	json_str = file.read()
-	data = json.loads(json_str)
-	# Extract lists containing vertex and edge data.
-	vertices = data['Vertices']
-	edges = data['Edges']
-
-	# Adjust coordinates so the top-leftmost node is at (0, 0).
-	normalize_positions()
-	# Cache node positions & calculate image size based on that information.
-	positions, plot_size = get_plot_size(vertices, radius, padding, scale)
-
-	# Create a new svg image with the previously determined size.
-	# Why the x and y coordinates are changed, I'm not sure.
-	d = draw.Drawing(plot_size[1], plot_size[0], origin='center', displayInline=False)
-	# Draw a white rectangle taking up the entire image to act as a background.
-	d.append(draw.Rectangle(-plot_size[1] / 2, -plot_size[0] / 2, plot_size[1], plot_size[0], fill='#ffffff'))
+def draw_edges(graph, positions, plot_size):
+	edges = graph['Edges']
 
 	# Draw the edges and weights, if applicable.
 	for i in range(len(edges)):
@@ -160,7 +99,7 @@ try:
 		text_origin = (int((start_x + end_x) / 2), int((start_y + end_y) / 2))
 
 		# Only perform if the graph is directed.
-		if data['Directed']:
+		if graph['Directed']:
 			# Move the text origin 30% of the way from the terminal to initial node.
 			# This way, in a digraph, the edge weight is writted closer to the node it enters instead of the average point of the line.
 			# This ensures that in a 2-way connection, the weights are not written on top of each other.
@@ -196,7 +135,9 @@ try:
 			# Write the text at the calculated + offset position.
 			d.append(draw.Text(str(weight), 0.75 * radius, text_origin[0] - offset_x, -text_origin[1] + offset_y, fill='#ff0000', text_anchor='middle', valign='middle'))
 
-	# Draw nodes.
+def draw_nodes(graph, positions, plot_size):
+	vertices = graph['Vertices']
+
 	for i in range(len(vertices)):
 		# Convert integer id to alpha name.
 		text = vertices[i]['Name']
@@ -216,11 +157,77 @@ try:
 			font_size = (1.8 * radius) / len(text)
 			d.append(draw.Text(text, font_size, origin[0] + 1, -origin[1] + 5, fill='#000000', text_anchor='middle', valign='middle', stroke='#ffffff', stroke_width=str(font_size / 100)))
 
-	# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
-	file_name = data['Name'].replace(" ", "_")
-	# Get optional arguments from the command line, indicating what file types to save to.
-	folder, save_as_svg, save_as_png, save_as_pdf = get_optional_args()
-	# Save the image to the specified file types.
-	save_file(folder + file_name, d, save_as_svg, save_as_png, save_as_pdf)
-except Exception as e:
-	print("DrawGraph.py:" + str(e))
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='Converts a generated .graph file into a visual output.')
+
+	parser.add_argument('input', type=str, help='.graph format file to draw')
+
+	parser.add_argument('-s', '--scale', required=False, type=int, default=1024, help='Output image size')
+	parser.add_argument('-o', '--out-dir', required=False, type=str, default=".", help="Directory to save the output images in")
+
+	parser.add_argument('--svg', action='store_true', required=False, help='Output as an svg image')
+	parser.add_argument('--png', action='store_true', required=False, help='Output as a png image')
+	parser.add_argument('--pdf', action='store_true', required=False, help='Output as a pdf')
+
+	parser.add_argument('--transparent', action='store_true', required=False, help='Use a transparent background?')
+
+	args = parser.parse_args()
+
+	if not (args.png or args.svg or args.pdf):
+		print("Specify an output format: --svg, --png, or --pdf")
+		exit(1)
+
+	try:
+		resolution = args.scale
+		file = open(args.input, "r")
+
+		folder = args.out_dir
+		# Remove trailing '/' since that gets added back in later
+		if folder[-1] == '/':
+			folder = folder[:-1]
+
+		save_as_svg = args.svg
+		save_as_png = args.png
+		save_as_pdf = args.pdf
+
+		# The radius of the nodes.
+		# Calculated as a proportion of the resolution.
+		radius = int(resolution / 32)
+		# Scale of the elements. Used to adjust the size of the elements based on the image resolution.
+		scale = int(resolution / 5)
+		# Thickness of things like the stroke width. Scales with resolution.
+		element_thickness = 0.01 * scale
+		# Extra space around the border of the image.
+		# Adds white space between the edge of the nodes and the outside of the image.
+		padding = 32 * element_thickness
+
+		# Load JSON data from the given file.
+		json_str = file.read()
+		data = json.loads(json_str)
+		# Extract lists containing vertex and edge data.
+		vertices = data['Vertices']
+		edges = data['Edges']
+
+		# Adjust coordinates so the top-leftmost node is at (0, 0).
+		normalize_positions()
+		# Cache node positions & calculate image size based on that information.
+		positions, plot_size = get_plot_size(vertices, radius, padding, scale)
+
+		# Create a new svg image with the previously determined size.
+		d = draw.Drawing(plot_size[1], plot_size[0], origin='center', displayInline=False)
+		if not args.transparent:
+			# Draw a white rectangle taking up the entire image to act as a background.
+			d.append(draw.Rectangle(-plot_size[1] / 2, -plot_size[0] / 2, plot_size[1], plot_size[0], fill='#ffffff'))
+
+		# Draw the graph
+		draw_edges(data, positions, plot_size)
+		draw_nodes(data, positions, plot_size)
+
+		# Make the file name the same as the name of the graph, as specified in the JSON file and replaced spaces with underscores.
+		file_name = data['Name'].replace(" ", "_")
+		# Save the image to the specified file types.
+		save_file(f"{folder}/{file_name}", d, args.svg, args.png, args.pdf)
+	except Exception as e:
+		print("DrawGraph.py:" + str(e))
+		traceback.print_exc()

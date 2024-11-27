@@ -112,19 +112,19 @@ namespace Mathlib.Graphs
 		{
 			// Start by exporting the adjacency matrix.
 			G.ExportAdjascencyMatrix("_outputs");
+			string fileName = G.Name.Replace(" ", "_");
 			// Run the command to compute the centrality.
-			Sys.Commands.CmdOut($"./scripts/Closeness _outputs/{G.Name}.adjmat {normalized}");
+			Sys.Commands.CmdOut($"./scripts/Closeness _outputs/{fileName}.adjmat {normalized}");
 
 			// Read computed values from the output file.
-			string[] values = System.IO.File.ReadAllLines($"_outputs/{G.Name}.closeness");
+			string[] values = System.IO.File.ReadAllLines($"_outputs/{fileName}.closeness");
 			// Parse and assign closeness values.
 			for (int i = 0; i < values.Length; i++)
 				G.Vertices[i].SetProp<double>(Centrality.CLOSENESS, double.Parse(values[i]));
-				//G.GetVertex(i).SetProp<double>(Centrality.CLOSENESS, double.Parse(values[i]));
 
 			if (deleteFiles)
 				// Delete files now that they've been used.
-				Sys.Commands.Cmd($"rm _outputs/{G.Name}.adjmat _outputs/{G.Name}.closeness");
+				Sys.Commands.Cmd($"rm _outputs/{fileName}.adjmat _outputs/{fileName}.closeness");
 		}
 
 		public static int RadiusOfCentrality(this Graph G, Vertex v, string measure = HARMONIC)

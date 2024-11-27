@@ -40,7 +40,7 @@ namespace Mathlib.Graphs
 
 		public Graph(Vertex[] vertices, Edge[] edges, string name = "New Graph", bool directed = false, bool weighted = false)
 		{
-			Name = name;
+			Name = name.Replace(" ", "_");
 			Directed = directed;
 			Weighted = weighted;
 
@@ -489,7 +489,7 @@ namespace Mathlib.Graphs
 		public void SaveOut(string folder, int resolution = 1024, string[] vertProps = null, string[] edgeProps = null, bool svg = true, bool png = false, bool pdf = false)
 		{
 			Save(Commands.RootFolder + folder, new string[] { Vertex.POS_X, Vertex.POS_Y }.Union(vertProps), edgeProps);
-			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {resolution} {folder}/{Name.Replace(' ', '_')}.graph {folder} {svg} {png} {pdf}");
+			Commands.CmdOut($"cd {Commands.RootFolder}", $"python3 DrawGraph.py {folder}/{Name.Replace(' ', '_')}.graph -s {resolution} --out-dir {folder} {(svg ? "--svg" : "")} {(png ? "--png" : "")} {(pdf ? "--pdf" : "")}");
 		}
 		public void SaveOut(string folder, params string[] vertProps)
 		{
