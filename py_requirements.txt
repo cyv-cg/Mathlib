@@ -1,2 +1,2 @@
-drawsvg==2.4.0
+drawsvg==2.4.1
 cairosvg==2.9.0
