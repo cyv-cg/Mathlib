@@ -1,2 +1,2 @@
 drawsvg==2.4.0
-cairosvg==2.9.0
+cairosvg==2.9.1
